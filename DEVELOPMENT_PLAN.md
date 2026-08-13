@@ -17,7 +17,7 @@
 - 分支：`main`
 - 构建：`dotnet build ScreenStat.sln -c Debug` → 0 警告 / 0 错误
 - 单元测试：`dotnet test ScreenStat.sln -c Debug --no-build` → 18/18 通过
-- 最近修复：
+- 已修复并提交：
   - `NumberParser` 不再把 `-10 100.25` 误判为 IP
   - 日期/时间噪声不再吞掉末尾独立统计值
   - `app.manifest` 高 DPI 配置迁移到 `ApplicationHighDpiMode`
@@ -47,7 +47,11 @@
 
 ### 提交
 
-- [ ] 将当前实现与修复按步骤提交到 `main`
+- [x] 将当前实现与修复按步骤提交到 `main`
+  - `79c95d0` docs: 添加开发计划与进度跟踪
+  - `42d9ff9` chore: 提交 ScreenStat 当前实现基线
+  - `6339037` fix(core): 修复数字解析掩码误判
+  - `999260a` fix(app): 修复高 DPI 配置构建警告
 
 ### OCR 真机复测
 
