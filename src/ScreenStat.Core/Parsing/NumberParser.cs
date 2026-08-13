@@ -13,7 +13,7 @@ public sealed class NumberParser : INumberParser
 
     // Only for clearly private-looking broken triples: 192 16 100
     private static readonly Regex NoisyIpTripleRegex = new(
-        @"\b(10|127|192|172)(?:[\s.]+)(\d{1,3})(?:[\s.]+)(\d{1,3})\b",
+        @"(?<![\d.-])(10|127|192|172)(?:[\s.]+)(\d{1,3})(?:[\s.]+)(\d{1,3})\b",
         RegexOptions.Compiled);
 
     private static readonly Regex IsoDateRegex = new(
@@ -156,10 +156,18 @@ public sealed class NumberParser : INumberParser
         });
         masked = IsoDateRegex.Replace(masked, " ");
         masked = SlashDateRegex.Replace(masked, " ");
-        masked = NoisyDateTimeRegex.Replace(masked, m =>
+        masked = MaskNoisyDateTime(masked);
+        masked = TimeRegex.Replace(masked, " ");
+        masked = NoisyTimeRegex.Replace(masked, " ");
+        return masked;
+    }
+
+    private static string MaskNoisyDateTime(string text)
+    {
+        return NoisyDateTimeRegex.Replace(text, m =>
         {
-            // Validate trailing parts are date/time sized (<=59), month-ish first pair loose.
-            var parts = Regex.Matches(m.Value, @"\d+").Cast<Match>().Select(x => int.Parse(x.Value)).ToList();
+            var parts = Regex.Matches(m.Value, @"\d+").Cast<Match>()
+                .Select(x => int.Parse(x.Value)).ToList();
             if (parts.Count < 3 || parts[0] is < 1900 or > 2100)
             {
                 return m.Value;
@@ -173,11 +181,21 @@ public sealed class NumberParser : INumberParser
                 }
             }
 
+            // In noisy OCR there is often no label, and the final numeric
+            // token is the statistic we want to keep. When the date/time
+            // match reaches the end of the text, keep that final token.
+            if (m.Index + m.Length == text.Length)
+            {
+                var lastNumber = Regex.Match(m.Value, @"\d+\s*$");
+                if (lastNumber.Success && lastNumber.Length < m.Value.Length)
+                {
+                    var prefixLength = m.Value.Length - lastNumber.Length;
+                    return Regex.Replace(m.Value.Substring(0, prefixLength), @"\S", " ") + lastNumber.Value;
+                }
+            }
+
             return " ";
         });
-        masked = TimeRegex.Replace(masked, " ");
-        masked = NoisyTimeRegex.Replace(masked, " ");
-        return masked;
     }
 
     private static bool TryParseNumber(string raw, out double value)
