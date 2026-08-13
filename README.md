@@ -1,4 +1,4 @@
-﻿# ScreenStat
+# ScreenStat
 
 Windows 屏幕框选数字统计工具。
 
@@ -34,15 +34,15 @@ dotnet run --project src/ScreenStat.App
 
 ## 发布
 
-自包含版（体积大，但目标机器无需安装 .NET Runtime）：
+自包含单文件版（推荐；目标机器无需安装 .NET Runtime，单文件约 77 MB）：
 
 ```powershell
-dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64
+dotnet publish src/ScreenStat.App/ScreenStat.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o publish/single-exe
 ```
 
-生成的主程序：`publish/win-x64/ScreenStat.exe`（自包含，无需安装 .NET Runtime）。
+生成的主程序：`publish/single-exe/ScreenStat.exe`（单个 exe，无需安装 .NET Runtime，约 77 MB）。
 
-框架依赖版（体积小，但目标机器需安装 .NET 7 Desktop Runtime）：
+框架依赖版（约 21 MB，但目标机器需安装 .NET 7 Desktop Runtime）：
 
 ```powershell
 dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/framework-dependent
@@ -50,7 +50,11 @@ dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained false -
 
 生成的主程序：`publish/framework-dependent/ScreenStat.exe`。
 
-体积说明：自包含版把 .NET Runtime 和 WPF 原生组件一起打包进 exe，因此约 172 MB；框架依赖版不打包 Runtime，约 21 MB。
+体积说明：
+
+- 自包含单文件版：启用 `EnableCompressionInSingleFile` 并把原生库压缩后内嵌进 exe，约 77 MB。
+- 未压缩自包含版：`dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64`，约 172 MB。
+- 框架依赖版：不打包 Runtime，约 21 MB，但目标机器必须安装 .NET 7 Desktop Runtime。
 
 ## 使用
 

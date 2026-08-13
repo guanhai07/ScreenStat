@@ -44,7 +44,7 @@
 | Phase 6 | 系统托盘 + 全局热键 | ✅ 完成（待真机验收） |
 | Phase 7 | 复制结果 | ✅ 完成（待真机验收） |
 | Phase 8 | 测试 | ✅ 自动化测试通过；GUI/热键/DPI 仍需真机抽测 |
-| Phase 9 | 发布 self-contained win-x64 | ✅ 完成 |
+| Phase 9 | 发布 self-contained 单文件 exe | ✅ 完成 |
 
 ## 待办事项
 
@@ -79,17 +79,11 @@
 
 ### 发布
 
-- [x] 生成 self-contained 单文件 `publish/win-x64/ScreenStat.exe`
-- [x] 启动验证通过（`STARTED=True`）
+- [x] 生成 self-contained 压缩单文件 `publish/single-exe/ScreenStat.exe`（约 77 MB）
+- [x] 启动验证通过（`Startup OK. HotkeyRegistered=True`）
 
 发布命令：
 
 ```powershell
-dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64
-```
-
-小体积版本（需目标机安装 .NET 7 Desktop Runtime）：
-
-```powershell
-dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/framework-dependent
+dotnet publish src/ScreenStat.App/ScreenStat.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o publish/single-exe
 ```
