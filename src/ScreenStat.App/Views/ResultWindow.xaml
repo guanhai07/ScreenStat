@@ -63,11 +63,10 @@
                  FontSize="14"
                  Margin="0,0,0,12" />
 
-        <TextBlock Text="识别数字" FontWeight="SemiBold" Margin="0,0,0,4"
+        <TextBlock Text="识别数字（可编辑，失焦后重算）" FontWeight="SemiBold" Margin="0,0,0,4"
                    Visibility="{Binding HasStatistics, Converter={StaticResource BoolToVis}}" />
-        <TextBox Text="{Binding NumbersText, Mode=OneWay}"
+        <TextBox Text="{Binding NumbersText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                  Visibility="{Binding HasStatistics, Converter={StaticResource BoolToVis}}"
-                 IsReadOnly="True"
                  TextWrapping="Wrap"
                  AcceptsReturn="True"
                  BorderThickness="1"
@@ -76,7 +75,13 @@
                  Foreground="#FFF3F3F3"
                  FontFamily="Consolas"
                  MinHeight="80"
-                 Margin="0,0,0,12" />
+                 Margin="0,0,0,4"
+                 ToolTip="修改数字后点击其他区域，统计结果会自动更新。" />
+        <TextBlock Text="修改后点击其他区域自动重算，数字和统计会同步更新。"
+                   FontSize="11"
+                   Foreground="#FFAAAAAA"
+                   Margin="0,0,0,12"
+                   Visibility="{Binding HasStatistics, Converter={StaticResource BoolToVis}}" />
 
         <TextBlock Text="OCR 原文" FontWeight="SemiBold" Margin="0,0,0,4" />
         <TextBox Text="{Binding OcrText, Mode=OneWay}"

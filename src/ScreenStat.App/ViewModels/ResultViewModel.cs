@@ -25,6 +25,7 @@ public partial class ResultViewModel : ObservableObject
 
     private StatisticsResult _statistics = StatisticsResult.Empty;
     private IReadOnlyList<NumberValue> _numbers = Array.Empty<NumberValue>();
+    private bool _suppressNumbersRebuild;
 
     public ResultViewModel(ClipboardService clipboardService)
     {
@@ -38,33 +39,45 @@ public partial class ResultViewModel : ObservableObject
         StatusText = "正在识别...";
         ErrorText = null;
         SummaryText = string.Empty;
-        NumbersText = string.Empty;
+        SetNumbersText(string.Empty);
         OcrText = string.Empty;
     }
 
     public void ApplyOcrSuccess(OcrResult ocr)
     {
         OcrText = ocr.FullText ?? string.Empty;
-        _numbers = _numberParser.Parse(OcrText);
-        _statistics = StatisticsCalculator.Calculate(_numbers);
-        NumbersText = string.Join(Environment.NewLine, _numbers.Select(n => n.OriginalText ?? n.Value.ToString("G")));
-        SummaryText = BuildSummary(_statistics, _numbers);
+        var numbers = _numberParser.Parse(OcrText);
         IsBusy = false;
 
-        if (_numbers.Count == 0)
+        if (numbers.Count == 0)
         {
+            _numbers = Array.Empty<NumberValue>();
+            _statistics = StatisticsResult.Empty;
             HasStatistics = false;
             StatusText = "未识别到数字";
             ErrorText = string.IsNullOrWhiteSpace(OcrText)
                 ? "OCR 未返回文本。"
                 : "OCR 成功，但没有提取到可统计的数字。可查看 OCR 原文。";
+            SummaryText = string.Empty;
+            SetNumbersText(string.Empty);
         }
         else
         {
-            HasStatistics = true;
-            StatusText = $"已识别 {_numbers.Count} 个数字";
-            ErrorText = null;
+            SetNumbersText(string.Join(
+                Environment.NewLine,
+                numbers.Select(n => n.OriginalText ?? n.Value.ToString("G"))));
+            RebuildFromNumbersText(NumbersText);
         }
+    }
+
+    partial void OnNumbersTextChanged(string value)
+    {
+        if (_suppressNumbersRebuild)
+        {
+            return;
+        }
+
+        RebuildFromNumbersText(value);
     }
 
     public void ApplyFailure(string message)
@@ -106,6 +119,50 @@ public partial class ResultViewModel : ObservableObject
         }
 
         _clipboardService.SetText(OcrText);
+    }
+
+    private void SetNumbersText(string value)
+    {
+        _suppressNumbersRebuild = true;
+        try
+        {
+            NumbersText = value;
+        }
+        finally
+        {
+            _suppressNumbersRebuild = false;
+        }
+    }
+
+    private void RebuildFromNumbersText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _numbers = Array.Empty<NumberValue>();
+            _statistics = StatisticsResult.Empty;
+            HasStatistics = false;
+            SummaryText = string.Empty;
+            StatusText = "未识别到数字";
+            ErrorText = "请每行输入一个数字，例如：12.5 或 123ms。";
+            return;
+        }
+
+        _numbers = _numberParser.Parse(text);
+        if (_numbers.Count == 0)
+        {
+            _statistics = StatisticsResult.Empty;
+            HasStatistics = false;
+            SummaryText = string.Empty;
+            StatusText = "没有可统计的数字";
+            ErrorText = "请每行输入一个数字，例如：12.5 或 123ms。";
+            return;
+        }
+
+        _statistics = StatisticsCalculator.Calculate(_numbers);
+        SummaryText = BuildSummary(_statistics, _numbers);
+        HasStatistics = true;
+        StatusText = $"已识别 {_numbers.Count} 个数字";
+        ErrorText = null;
     }
 
     private static string BuildSummary(StatisticsResult stats, IReadOnlyList<NumberValue> numbers)
