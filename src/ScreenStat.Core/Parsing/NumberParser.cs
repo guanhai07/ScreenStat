@@ -13,7 +13,7 @@ public sealed class NumberParser : INumberParser
 
     // Only for clearly private-looking broken triples: 192 16 100
     private static readonly Regex NoisyIpTripleRegex = new(
-        @"(?<![\d.-])(10|127|192|172)(?:[\s.]+)(\d{1,3})(?:[\s.]+)(\d{1,3})\b",
+        @"(?<![\d.-])(127|192|172)(?:[\s.]+)(\d{1,3})(?:[\s.]+)(\d{1,3})\b",
         RegexOptions.Compiled);
 
     private static readonly Regex IsoDateRegex = new(
@@ -31,10 +31,6 @@ public sealed class NumberParser : INumberParser
 
     private static readonly Regex TimeRegex = new(
         @"\b\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?\b",
-        RegexOptions.Compiled);
-
-    private static readonly Regex NoisyTimeRegex = new(
-        @"\b\d{1,2}[:\s]\d{2}[:\s]\d{2}(?:[.,]\d+)?\b",
         RegexOptions.Compiled);
 
     private static readonly Regex PercentileLabelRegex = new(
@@ -158,7 +154,6 @@ public sealed class NumberParser : INumberParser
         masked = SlashDateRegex.Replace(masked, " ");
         masked = MaskNoisyDateTime(masked);
         masked = TimeRegex.Replace(masked, " ");
-        masked = NoisyTimeRegex.Replace(masked, " ");
         return masked;
     }
 
