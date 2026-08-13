@@ -232,15 +232,24 @@ public sealed class WindowsOcrService : IOcrService
     /// </summary>
     private string CleanupFragmentNoise(string text)
     {
-        var lines = SplitLines(text).Select(CollapseBrokenDigits).ToList();
-        var numbers = _parser.Parse(string.Join(Environment.NewLine, lines));
+        var lines = SplitLines(text)
+            .Select(CleanupLineFragments)
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToList();
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private string CleanupLineFragments(string line)
+    {
+        var numbers = _parser.Parse(line);
         if (numbers.Count <= 1)
         {
-            return string.Join(Environment.NewLine, lines);
+            return line;
         }
 
         var kept = new List<NumberValue>();
-        foreach (var n in numbers.OrderByDescending(n => (n.OriginalText ?? string.Empty).Count(char.IsDigit)))
+        foreach (var n in numbers.OrderByDescending(n => DigitsOnly(n.OriginalText ?? n.Value.ToString("G")).Length))
         {
             var digits = DigitsOnly(n.OriginalText ?? n.Value.ToString("G"));
             if (digits.Length == 0)
@@ -260,10 +269,7 @@ public sealed class WindowsOcrService : IOcrService
             }
         }
 
-        // Restore top-to-bottom order by original position.
-        return string.Join(
-            Environment.NewLine,
-            kept.OrderBy(n => n.Position).Select(FormatNumber));
+        return string.Join(" ", kept.OrderBy(n => n.Position).Select(FormatNumber));
     }
 
     private static string CollapseBrokenDigits(string line)
@@ -382,36 +388,21 @@ public sealed class WindowsOcrService : IOcrService
             return string.Empty;
         }
 
-        var sb = new StringBuilder(raw.Length);
-        foreach (var ch in raw.Trim())
-        {
-            switch (ch)
-            {
-                case 'O':
-                case 'o':
-                    sb.Append('0');
-                    break;
-                case 'l':
-                case 'I':
-                case '|':
-                    sb.Append('1');
-                    break;
-                case 'S':
-                    sb.Append('5');
-                    break;
-                case 'B':
-                    sb.Append('8');
-                    break;
-                case 'Z':
-                    sb.Append('2');
-                    break;
-                default:
-                    sb.Append(ch);
-                    break;
-            }
-        }
+        var text = raw.Trim();
 
-        return CollapseBrokenDigits(sb.ToString().Trim());
+        // Only normalize confusables near digits; doing it globally corrupts
+        // words such as "latency" (l -> 1) and "query" (S -> 5 is not in use,
+        // but the same principle applies to letters).
+        text = Regex.Replace(text, @"(?<=\d)O|O(?=\d)", "0");
+        text = Regex.Replace(text, @"(?<=\d)o|o(?=\d)", "0");
+        text = Regex.Replace(text, @"(?<=\d)l|l(?=\d)", "1");
+        text = Regex.Replace(text, @"(?<=\d)I|I(?=\d)", "1");
+        text = Regex.Replace(text, @"(?<=\d)S|S(?=\d)", "5");
+        text = Regex.Replace(text, @"(?<=\d)B|B(?=\d)", "8");
+        text = Regex.Replace(text, @"(?<=\d)Z|Z(?=\d)", "2");
+        text = Regex.Replace(text, @"(?<=\d)\||\|(?=\d)", "1");
+
+        return CollapseBrokenDigits(text.Trim());
     }
 
     private int Score(string text)
