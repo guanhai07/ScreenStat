@@ -18,11 +18,12 @@
 - 构建：`dotnet build ScreenStat.sln -c Debug` → 0 警告 / 0 错误
 - 单元测试：`dotnet test ScreenStat.sln -c Debug` → 20/20 通过
 - OCR 集成测试：`dotnet test tests/ScreenStat.OcrTests/ScreenStat.OcrTests.csproj -c Debug` → 6/6 通过
-- UI 启动冒烟测试：`dotnet test tests/ScreenStat.SmokeTests/ScreenStat.SmokeTests.csproj -c Debug` → 1/1 通过
+- UI 启动 + 手动修正测试：`dotnet test tests/ScreenStat.SmokeTests/ScreenStat.SmokeTests.csproj -c Debug` → 2/2 通过
 - 已修复并提交：
   - `NumberParser` 不再把 `-10 100.25` 误判为 IP
   - 日期/时间噪声不再吞掉末尾独立统计值
   - `app.manifest` 高 DPI 配置迁移到 `ApplicationHighDpiMode`
+  - 识别数字支持手动修正，失焦后自动重算统计
 
 ## 验收规则
 
