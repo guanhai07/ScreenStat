@@ -42,7 +42,7 @@
 | Phase 6 | 系统托盘 + 全局热键 | ✅ 完成（待真机验收） |
 | Phase 7 | 复制结果 | ✅ 完成（待真机验收） |
 | Phase 8 | 测试 | ✅ 自动化测试通过；GUI/热键/DPI 仍需真机抽测 |
-| Phase 9 | 发布 self-contained win-x64 | ⬜ 待完成 |
+| Phase 9 | 发布 self-contained win-x64 | ✅ 完成 |
 
 ## 待办事项
 
@@ -77,5 +77,11 @@
 
 ### 发布
 
-- [ ] 生成 self-contained 单文件 `ScreenStat.exe`
-- [ ] 在无 .NET Runtime 的 Windows 上验证启动
+- [x] 生成 self-contained 单文件 `publish/win-x64/ScreenStat.exe`
+- [x] 启动验证通过（`STARTED=True`）
+
+发布命令：
+
+```powershell
+dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64
+```

@@ -34,8 +34,10 @@ dotnet run --project src/ScreenStat.App
 ## 发布
 
 ```powershell
-dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64
 ```
+
+生成的主程序：`publish/win-x64/ScreenStat.exe`（自包含，无需安装 .NET Runtime）。
 
 ## 使用
 
