@@ -1,0 +1,10 @@
+﻿# Ignore build outputs and user files
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+*.DotSettings.user
+*.log
+TestResults/
+publish/

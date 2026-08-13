@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>ScreenStat Manual Scenarios</title>
+  <style>
+    body { font-family: Consolas, "Segoe UI", sans-serif; margin: 24px; background: #1e1e1e; color: #ddd; }
+    h1,h2 { color: #fff; }
+    section { margin: 20px 0; padding: 16px; border: 1px solid #444; border-radius: 8px; background: #252526; }
+    .hint { color: #9cdcfe; margin-bottom: 8px; font-size: 13px; }
+    .box { display: inline-block; padding: 12px 16px; background: #111; border: 1px dashed #666; line-height: 1.5; white-space: pre; font-size: 18px; }
+    .light { background: #f5f5f5; color: #111; }
+    .light .box { background: #fff; border-color: #aaa; color: #111; }
+    table { border-collapse: collapse; font-size: 16px; }
+    td, th { border: 1px solid #666; padding: 6px 12px; }
+    .expect { color: #ce9178; font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>ScreenStat 手工测试页</h1>
+  <p>对每个灰色虚线框：Ctrl+Shift+X → 只框选数字区域 → 对照期望。</p>
+
+  <section>
+    <h2>1. 纯整数列表（深色）</h2>
+    <div class="hint">框选下面 5 行</div>
+    <div class="box">123
+156
+98
+231
+145</div>
+    <div class="expect">期望: Count=5, Sum=753, Avg=150.6, Min=98, Max=231</div>
+  </section>
+
+  <section class="light">
+    <h2>2. 纯整数列表（浅色）</h2>
+    <div class="hint">验证浅色主题</div>
+    <div class="box">10
+20
+30
+40
+50</div>
+    <div class="expect">期望: Count=5, Sum=150, Avg=30</div>
+  </section>
+
+  <section>
+    <h2>3. 小数 / 负数</h2>
+    <div class="box">12.5
+-3.25
+0.5
+-10
+100.25</div>
+    <div class="expect">期望: 5 个数，含负数与小数</div>
+  </section>
+
+  <section>
+    <h2>4. 千分位</h2>
+    <div class="box">1,234
+12,345.67
+2,000</div>
+    <div class="expect">期望: 1234, 12345.67, 2000</div>
+  </section>
+
+  <section>
+    <h2>5. 带单位（日志风格）</h2>
+    <div class="box">query finished cost=123ms
+query finished cost=156ms
+query finished cost=98ms
+query finished cost=231ms
+query finished cost=145ms</div>
+    <div class="expect">期望: 123/156/98/231/145，单位 ms</div>
+  </section>
+
+  <section>
+    <h2>6. 百分比</h2>
+    <div class="box">12.5%
+8%
+99.9%
+3.14%</div>
+    <div class="expect">期望: 12.5, 8, 99.9, 3.14</div>
+  </section>
+
+  <section>
+    <h2>7. 中英混合</h2>
+    <div class="box">平均耗时 123ms
+最大耗时 256ms
+最小耗时 45ms
+P95 200ms</div>
+    <div class="expect">期望至少: 123, 256, 45, 200</div>
+  </section>
+
+  <section>
+    <h2>8. 应过滤：日期 / IP（不应全拆成数字）</h2>
+    <div class="box">2026-08-12 10:30:25
+192.168.1.100
+latency 42</div>
+    <div class="expect">期望主要保留 42；日期时间 IP 不应炸成一堆统计数字</div>
+  </section>
+
+  <section>
+    <h2>9. 表格两列数字</h2>
+    <table>
+      <tr><th>门店</th><th>客流</th><th>停留</th></tr>
+      <tr><td>A</td><td>1234</td><td>35.6</td></tr>
+      <tr><td>B</td><td>1532</td><td>42.1</td></tr>
+      <tr><td>C</td><td>987</td><td>28.7</td></tr>
+      <tr><td>D</td><td>1821</td><td>51.2</td></tr>
+    </table>
+    <div class="expect">MVP: 框整表会拿到多列数字；可先只框“客流”列</div>
+  </section>
+</body>
+</html>

@@ -1,0 +1,43 @@
+﻿===== ScreenStat 文本场景 =====
+
+# A. 纯数字
+123
+156
+98
+231
+145
+
+# B. 小数负数
+12.5
+-3.25
+0.5
+-10
+100.25
+
+# C. 千分位
+1,234
+12,345.67
+2,000
+
+# D. 日志单位
+query finished cost=123ms
+query finished cost=156ms
+query finished cost=98ms
+query finished cost=231ms
+query finished cost=145ms
+
+# E. 中英混合
+平均耗时 123ms
+最大耗时 256ms
+最小耗时 45ms
+P95 200ms
+
+# F. 过滤干扰
+2026-08-12 10:30:25
+192.168.1.100
+latency 42
+
+# G. 终端风格
+[INFO] request id=1001 elapsed=87.3ms
+[INFO] request id=1002 elapsed=120.0ms
+[INFO] request id=1003 elapsed=95.5ms
