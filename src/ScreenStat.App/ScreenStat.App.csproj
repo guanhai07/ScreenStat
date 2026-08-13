@@ -13,6 +13,7 @@
     <Product>ScreenStat</Product>
     <Description>Windows screen number statistics tool</Description>
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
   <ItemGroup>
