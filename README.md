@@ -34,11 +34,23 @@ dotnet run --project src/ScreenStat.App
 
 ## 发布
 
+自包含版（体积大，但目标机器无需安装 .NET Runtime）：
+
 ```powershell
 dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64
 ```
 
 生成的主程序：`publish/win-x64/ScreenStat.exe`（自包含，无需安装 .NET Runtime）。
+
+框架依赖版（体积小，但目标机器需安装 .NET 7 Desktop Runtime）：
+
+```powershell
+dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/framework-dependent
+```
+
+生成的主程序：`publish/framework-dependent/ScreenStat.exe`。
+
+体积说明：自包含版把 .NET Runtime 和 WPF 原生组件一起打包进 exe，因此约 172 MB；框架依赖版不打包 Runtime，约 21 MB。
 
 ## 使用
 

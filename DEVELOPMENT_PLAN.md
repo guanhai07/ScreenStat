@@ -87,3 +87,9 @@
 ```powershell
 dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64
 ```
+
+小体积版本（需目标机安装 .NET 7 Desktop Runtime）：
+
+```powershell
+dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/framework-dependent
+```
