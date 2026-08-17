@@ -10,13 +10,13 @@ namespace ScreenStat.App.Services;
 internal sealed class CaptureWorkflowService
 {
     private readonly ScreenCaptureService _captureService = new();
-    private readonly IOcrService _ocrService;
+    private readonly ILayoutOcrService _ocrService;
     private readonly ClipboardService _clipboardService;
     private readonly object _gate = new();
     private bool _isRunning;
     private List<SelectionWindow> _overlays = new();
 
-    public CaptureWorkflowService(IOcrService ocrService, ClipboardService clipboardService)
+    public CaptureWorkflowService(ILayoutOcrService ocrService, ClipboardService clipboardService)
     {
         _ocrService = ocrService;
         _clipboardService = clipboardService;
@@ -49,32 +49,19 @@ internal sealed class CaptureWorkflowService
             var bitmap = _captureService.Capture(region.Value);
             var pixels = ScreenCaptureService.ToBgra32Pixels(bitmap, out var width, out var height);
 
-            // Debug original crop.
-            try
-            {
-                var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
-                enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-                using var fs = System.IO.File.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ScreenStat-last-capture.png"));
-                enc.Save(fs);
-            }
-            catch
-            {
-                // ignore
-            }
-
             var viewModel = new ResultViewModel(_clipboardService);
             viewModel.ShowLoading();
             var window = new ResultWindow(viewModel);
             window.Show();
 
-            var ocr = await _ocrService.RecognizeAsync(pixels, width, height).ConfigureAwait(true);
+            var ocr = await _ocrService.RecognizeLayoutAsync(pixels, width, height).ConfigureAwait(true);
             if (!ocr.Success)
             {
                 viewModel.ApplyFailure(ocr.ErrorMessage ?? "OCR 失败");
                 return;
             }
 
-            viewModel.ApplyOcrSuccess(ocr);
+            viewModel.ApplyLayoutSuccess(ocr);
         }
         catch (Exception ex)
         {

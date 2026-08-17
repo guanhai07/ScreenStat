@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using ScreenStat.App.Services;
+using ScreenStat.Core.Abstractions;
 using Drawing = System.Drawing;
 using Forms = System.Windows.Forms;
 using WpfApplication = System.Windows.Application;
@@ -17,6 +18,7 @@ public partial class App : WpfApplication
     private Forms.NotifyIcon? _trayIcon;
     private HotkeyService? _hotkeyService;
     private CaptureWorkflowService? _workflow;
+    private ILayoutOcrService? _layoutOcrService;
     private ClipboardService? _clipboardService;
     private Window? _hiddenWindow;
 
@@ -53,7 +55,10 @@ public partial class App : WpfApplication
             _hiddenWindow.Hide();
 
             _clipboardService = new ClipboardService();
-            _workflow = new CaptureWorkflowService(new WindowsOcrService(), _clipboardService);
+            _layoutOcrService = new FallbackLayoutOcrService(
+                new RapidLayoutOcrService(),
+                new WindowsLayoutOcrService());
+            _workflow = new CaptureWorkflowService(_layoutOcrService, _clipboardService);
 
             _hotkeyService = new HotkeyService();
             _hotkeyService.HotkeyPressed += (_, _) =>
@@ -99,6 +104,10 @@ public partial class App : WpfApplication
         try
         {
             _hotkeyService?.Dispose();
+            if (_layoutOcrService is IDisposable disposableOcrService)
+            {
+                disposableOcrService.Dispose();
+            }
             if (_trayIcon is not null)
             {
                 _trayIcon.Visible = false;

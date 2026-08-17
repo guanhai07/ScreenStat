@@ -46,6 +46,23 @@ public partial class ResultViewModel : ObservableObject
     public void ApplyOcrSuccess(OcrResult ocr)
     {
         OcrText = ocr.FullText ?? string.Empty;
+        ApplyRecognizedText();
+    }
+
+    public void ApplyLayoutSuccess(OcrDocument document)
+    {
+        OcrText = document.FullText;
+        ApplyRecognizedText();
+
+        if (!string.IsNullOrWhiteSpace(document.WarningMessage))
+        {
+            ErrorText = document.WarningMessage;
+            StatusText += "（已回退）";
+        }
+    }
+
+    private void ApplyRecognizedText()
+    {
         var numbers = _numberParser.Parse(OcrText);
         IsBusy = false;
 

@@ -6,6 +6,7 @@ public sealed class OcrDocument
     public string Engine { get; init; } = string.Empty;
     public IReadOnlyList<OcrRegion> Regions { get; init; } = Array.Empty<OcrRegion>();
     public string? ErrorMessage { get; init; }
+    public string? WarningMessage { get; init; }
 
     public string FullText => string.Join(
         Environment.NewLine,
