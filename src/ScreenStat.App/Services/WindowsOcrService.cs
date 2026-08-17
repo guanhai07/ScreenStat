@@ -43,8 +43,6 @@ public sealed class WindowsOcrService : IOcrService
             // rowIndex -> list of OCR texts for that row
             var rowTexts = new Dictionary<int, List<RowRecognition>>();
             var fullTexts = new List<string>();
-            OcrImagePreprocessor.PreparedImage? debugImage = null;
-            var debugScore = int.MinValue;
 
             foreach (var candidate in candidates)
             {
@@ -53,13 +51,6 @@ public sealed class WindowsOcrService : IOcrService
                 if (string.IsNullOrWhiteSpace(text))
                 {
                     continue;
-                }
-
-                var score = Score(text);
-                if (score > debugScore)
-                {
-                    debugScore = score;
-                    debugImage = candidate;
                 }
 
                 if (TryParseRowIndex(candidate.Profile, out var rowIndex))
@@ -97,11 +88,6 @@ public sealed class WindowsOcrService : IOcrService
             if (string.IsNullOrWhiteSpace(merged))
             {
                 return OcrResult.Failed("OCR 未返回文本。");
-            }
-
-            if (debugImage is not null)
-            {
-                OcrImagePreprocessor.TrySaveDebugPng(debugImage, "ScreenStat-last-ocr.png");
             }
 
             return new OcrResult

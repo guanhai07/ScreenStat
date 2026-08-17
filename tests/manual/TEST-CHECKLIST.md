@@ -21,8 +21,7 @@
 | 15 | ESC 取消框选 | 任意 | 不弹错误结果 | | |
 | 16 | 多显示器（如有） | 副屏框选 | 坐标不偏 | | |
 | 17 | 125%/150% DPI（如可测） | 系统缩放 | 框选不偏移 | | |
+| 18 | 16 行三列表格 | v2-16-row-report.html，只框数字区 | 3 列 × 16 行，1111 不拆分 | | |
 
-调试文件：
-- %TEMP%\ScreenStat-last-capture.png
-- %TEMP%\ScreenStat-last-ocr.png
-- %TEMP%\ScreenStat-startup.log
+诊断日志：
+- `%TEMP%\ScreenStat-startup.log`（只记录启动状态与异常，不保存截图或 OCR 内容）

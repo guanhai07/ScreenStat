@@ -1,6 +1,15 @@
 # ScreenStat 开发计划与进度
 
-> OCR V2（本地 ONNX、多列坐标化统计）的当前计划与恢复入口见 [`OCR_V2_PLAN.md`](OCR_V2_PLAN.md)。本文保留 V1 历史进度。
+> OCR V2（本地 ONNX、多列坐标化统计）的当前计划与恢复入口见 [`OCR_V2_PLAN.md`](OCR_V2_PLAN.md)。本文其余内容保留为 V1 历史记录。
+
+## OCR V2 当前快照（2026-08-17）
+
+- V2-0 至 V2-6 均已完成，每阶段均有独立 Git 提交。
+- .NET 10 构建：0 警告 / 0 错误。
+- 自动化：Core 25、OCR 15、Smoke/UI 5，共 45 项通过。
+- Edge 14px、3 列 × 16 行报表像素回归：3 列均完整识别。
+- 自包含 `win-x64` ZIP 已生成并通过独立启动检查。
+- 仍建议用户在自己的真实报表、DPI 和多显示器环境完成 [`TEST_PLAN.md`](TEST_PLAN.md) 中的交互抽测。
 
 ## 目的
 
@@ -14,7 +23,7 @@
   → git commit
 ```
 
-## 状态总览
+## V1 状态总览（历史）
 
 - 分支：`main`
 - 构建：`dotnet build ScreenStat.sln -c Debug` → 0 警告 / 0 错误

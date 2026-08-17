@@ -71,31 +71,6 @@ internal static class OcrImagePreprocessor
         return candidates;
     }
 
-    public static void TrySaveDebugPng(PreparedImage image, string fileName)
-    {
-        try
-        {
-            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileName);
-            var source = BitmapSource.Create(
-                image.Width,
-                image.Height,
-                96, 96,
-                PixelFormats.Bgra32,
-                null,
-                image.BgraPixels,
-                image.Width * 4);
-
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(source));
-            using var fs = System.IO.File.Create(path);
-            encoder.Save(fs);
-        }
-        catch
-        {
-            // debug aid only
-        }
-    }
-
     private readonly record struct RowBand(int Y, int Height);
 
     private static List<RowBand> SegmentRows(byte[] gray, int width, int height)

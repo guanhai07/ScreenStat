@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 using RapidOcrNet;
 using ScreenStat.Core.Abstractions;
@@ -14,16 +15,35 @@ public sealed class RapidLayoutOcrService : ILayoutOcrService, IDisposable
 {
     private const string EngineName = "PP-OCRv5-ONNX";
 
-    private static readonly RapidOcrOptions ScreenshotOptions = RapidOcrOptions.Default with
+    private static readonly RapidOcrOptions BaseScreenshotOptions = RapidOcrOptions.Default with
     {
         DoAngle = false,
         ReturnWordBox = true,
         ReturnSingleCharBox = false,
         TextScore = 0.30f,
         ImgResize = 0,
-        LimitSideLen = 960,
-        MaxSideLen = 2560,
         Padding = 24
+    };
+
+    private static readonly RapidOcrOptions NarrowColumnOptions = BaseScreenshotOptions with
+    {
+        LimitSideLen = 960,
+        MaxSideLen = 2560
+    };
+
+    private static readonly RapidOcrOptions MediumSelectionOptions = BaseScreenshotOptions with
+    {
+        LimitSideLen = 1200,
+        MaxSideLen = 2800
+    };
+
+    private static readonly RapidOcrOptions WideSelectionOptions = BaseScreenshotOptions with
+    {
+        // Browser reports commonly use 12-14 px glyphs. Keeping a larger
+        // detector canvas prevents repeated narrow digits (for example 1111)
+        // from collapsing or being split into separate boxes.
+        LimitSideLen = 1600,
+        MaxSideLen = 4096
     };
 
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -47,8 +67,9 @@ public sealed class RapidLayoutOcrService : ILayoutOcrService, IDisposable
             EnsureInitialized();
 
             using var bitmap = CreateBitmap(bgraPixels, width, height);
+            var options = SelectOptions(width, height);
             var result = await Task.Run(
-                () => _ocr!.Detect(bitmap, ScreenshotOptions),
+                () => _ocr!.Detect(bitmap, options),
                 cancellationToken).ConfigureAwait(false);
 
             var regions = ConvertRegions(result);
@@ -96,12 +117,30 @@ public sealed class RapidLayoutOcrService : ILayoutOcrService, IDisposable
         var ocr = new RapidOcr();
         try
         {
-            ocr.InitModels();
+            var modelDirectory = Path.Combine(AppContext.BaseDirectory, "models", "v5");
+            var modelSet = RapidOcrModelSet.PPOCRv5Latin with
+            {
+                DetModelPath = Path.Combine(modelDirectory, "ch_PP-OCRv5_mobile_det.onnx"),
+                ClsModelPath = Path.Combine(modelDirectory, "ch_PP-LCNet_x0_25_textline_ori_cls_mobile.onnx"),
+                RecModelPath = Path.Combine(modelDirectory, "latin_PP-OCRv5_rec_mobile_infer.onnx"),
+                KeysPath = Path.Combine(modelDirectory, "ppocrv5_latin_dict.txt")
+            };
+            ocr.InitModels(modelSet);
             _ocr = ocr;
         }
         catch
         {
-            ocr.Dispose();
+            try
+            {
+                ocr.Dispose();
+            }
+            catch
+            {
+                // Some RapidOcrNet versions throw while disposing a partially
+                // initialized pipeline. Preserve the original model error so
+                // the fallback service can report it.
+            }
+
             throw;
         }
     }
@@ -115,6 +154,19 @@ public sealed class RapidLayoutOcrService : ILayoutOcrService, IDisposable
             SKAlphaType.Unpremul));
         Marshal.Copy(bgraPixels, 0, bitmap.GetPixels(), bgraPixels.Length);
         return bitmap;
+    }
+
+    private static RapidOcrOptions SelectOptions(int width, int height)
+    {
+        var aspectRatio = (double)width / height;
+        if (aspectRatio < 0.45)
+        {
+            return NarrowColumnOptions;
+        }
+
+        return aspectRatio < 0.80
+            ? MediumSelectionOptions
+            : WideSelectionOptions;
     }
 
     private static IReadOnlyList<OcrRegion> ConvertRegions(global::RapidOcrNet.OcrResult result)

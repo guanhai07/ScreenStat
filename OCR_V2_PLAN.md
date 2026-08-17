@@ -99,8 +99,8 @@ git diff --check
 | V2-2 | OCR/列领域模型和聚类算法 | 单列、多列、错位、低置信度测试通过 | `feat(core): add coordinate based column analysis` | ✅ `29cecaa` |
 | V2-3 | RapidOcrNet 本地引擎 | 真实截图返回坐标、文本、置信度；无网络 | `feat(ocr): add local ONNX layout OCR` | ✅ `753f804` |
 | V2-4 | 工作流接入与 Windows OCR 回退 | 主引擎失败时可回退；错误可见 | `feat(app): integrate local OCR with fallback` | ✅ `7a244de` |
-| V2-5 | 多列结果界面 | 每列独立统计；可编辑/排除低置信度项 | `feat(ui): add multi-column statistics review` | ✅ 本提交 |
-| V2-6 | 真机回归与离线发布 | 16 行浏览器样本完整；portable ZIP 可在无运行时机器启动 | `release: package offline OCR v2` | ⏳ |
+| V2-5 | 多列结果界面 | 每列独立统计；可编辑/排除低置信度项 | `feat(ui): add multi-column statistics review` | ✅ `ae10214` |
+| V2-6 | 真机回归与离线发布 | 16 行浏览器样本完整；portable ZIP 可在无运行时机器启动 | `release: package offline OCR v2` | ✅ 本提交 |
 
 ## 6. 测试矩阵
 
@@ -166,3 +166,13 @@ dotnet --list-sdks
 - 不引入完整 Python/Paddle 运行环境。
 - 不做重量级表格结构模型；通过检测框坐标聚类实现单列/多列统计。
 - Windows OCR 保留为回退，不再作为主识别引擎。
+
+### V2-6 验收记录
+
+- Edge 无头模式按真实浏览器字体渲染 `tests/manual/v2-16-row-report.html`。
+- 数字区框选像素由 PP-OCRv5 恢复为 3 列，每列 16 个值；`1111` 不再拆分。
+- 自动化新增 14px、3 列 × 16 行表格回归测试。
+- 发行版隐藏启动验证成功，冷启动写入 `Startup OK` 约 1.0–1.5 秒。
+- 16 行单列测试首次 OCR 约 1.8 秒，复用模型后约 1.3–1.4 秒。
+- 自包含发布：EXE 约 88.3 MB，模型约 13.1 MB，解压约 101.4 MB，ZIP 约 94.6 MB。
+- 用户无需安装 .NET、Python、PaddleOCR、ONNX Runtime；不调用第三方识别 API。
