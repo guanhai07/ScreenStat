@@ -15,6 +15,7 @@ namespace ScreenStat.App.Services;
 public sealed class WindowsOcrService : IOcrService
 {
     private readonly NumberParser _parser = new();
+    private sealed record RowRecognition(string Text, int Priority);
 
     public async Task<OcrResult> RecognizeAsync(byte[] bgraPixels, int width, int height, CancellationToken cancellationToken = default)
     {
@@ -40,7 +41,7 @@ public sealed class WindowsOcrService : IOcrService
             }
 
             // rowIndex -> list of OCR texts for that row
-            var rowTexts = new Dictionary<int, List<string>>();
+            var rowTexts = new Dictionary<int, List<RowRecognition>>();
             var fullTexts = new List<string>();
             OcrImagePreprocessor.PreparedImage? debugImage = null;
             var debugScore = int.MinValue;
@@ -65,11 +66,11 @@ public sealed class WindowsOcrService : IOcrService
                 {
                     if (!rowTexts.TryGetValue(rowIndex, out var list))
                     {
-                        list = new List<string>();
+                        list = new List<RowRecognition>();
                         rowTexts[rowIndex] = list;
                     }
 
-                    list.Add(text);
+                    list.Add(new RowRecognition(text, GetRowCandidatePriority(candidate.Profile)));
                 }
                 else
                 {
@@ -103,22 +104,6 @@ public sealed class WindowsOcrService : IOcrService
                 OcrImagePreprocessor.TrySaveDebugPng(debugImage, "ScreenStat-last-ocr.png");
             }
 
-            try
-            {
-                var log = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ScreenStat-startup.log");
-                var flat = merged.Replace("\r", " ").Replace("\n", " | ");
-                var count = _parser.Parse(merged).Count;
-                System.IO.File.AppendAllText(
-                    log,
-                    "[" + DateTime.Now.ToString("HH:mm:ss") + "] OCR numbers=" + count +
-                    ", rows=" + rowTexts.Count + ", fulls=" + fullTexts.Count +
-                    ", text=" + flat + Environment.NewLine);
-            }
-            catch
-            {
-                // ignore
-            }
-
             return new OcrResult
             {
                 FullText = merged,
@@ -136,7 +121,7 @@ public sealed class WindowsOcrService : IOcrService
     }
 
     private string BuildResultFromRowsAndFull(
-        Dictionary<int, List<string>> rowTexts,
+        Dictionary<int, List<RowRecognition>> rowTexts,
         List<string> fullTexts)
     {
         // 1) Each visual row contributes at most ONE number (best candidate for that row).
@@ -188,19 +173,32 @@ public sealed class WindowsOcrService : IOcrService
         return bestFullText ?? string.Empty;
     }
 
-    private NumberValue? PickBestNumberForRow(List<string> texts)
+    private NumberValue? PickBestNumberForRow(List<RowRecognition> recognitions)
     {
+        // Prefer one unambiguous number from the natural contrast crop. Use the
+        // synthetic-context crop only when Windows OCR discarded or split it,
+        // and binary OCR last because punctuation/percent signs are often lost.
+        foreach (var priority in new[] { 0, 1, 2 })
+        {
+            var exact = recognitions
+                .Where(r => r.Priority == priority)
+                .Select(r => ParseRowNumbers(r.Text))
+                .Where(numbers => numbers.Count == 1)
+                .Select(numbers => numbers[0])
+                .OrderByDescending(NumberCompletenessScore)
+                .FirstOrDefault();
+            if (exact is not null)
+            {
+                return exact;
+            }
+        }
+
         NumberValue? best = null;
         var bestScore = int.MinValue;
 
-        foreach (var text in texts)
+        foreach (var recognition in recognitions)
         {
-            // Collapse a row into one logical line first.
-            var line = string.Join(" ", SplitLines(text));
-            line = NormalizeLine(line);
-            line = CollapseBrokenDigits(line);
-
-            var numbers = _parser.Parse(line);
+            var numbers = ParseRowNumbers(recognition.Text);
             if (numbers.Count == 0)
             {
                 continue;
@@ -214,8 +212,7 @@ public sealed class WindowsOcrService : IOcrService
                 .ThenByDescending(n => Math.Abs(n.Value))
                 .First();
 
-            var score = (candidate.OriginalText ?? string.Empty).Count(char.IsDigit) * 10
-                        + (candidate.OriginalText?.Length ?? 0);
+            var score = NumberCompletenessScore(candidate);
             if (score > bestScore)
             {
                 bestScore = score;
@@ -224,6 +221,33 @@ public sealed class WindowsOcrService : IOcrService
         }
 
         return best;
+    }
+
+    private IReadOnlyList<NumberValue> ParseRowNumbers(string text)
+    {
+        var line = string.Join(" ", SplitLines(text));
+        line = NormalizeLine(line);
+        line = CollapseBrokenDigits(line);
+        return _parser.Parse(line);
+    }
+
+    private static int NumberCompletenessScore(NumberValue number) =>
+        (number.OriginalText ?? string.Empty).Count(char.IsDigit) * 10
+        + (number.OriginalText?.Length ?? 0);
+
+    private static int GetRowCandidatePriority(string profile)
+    {
+        if (profile.StartsWith("row-context-", StringComparison.OrdinalIgnoreCase))
+        {
+            return 1;
+        }
+
+        if (profile.StartsWith("row-bin-", StringComparison.OrdinalIgnoreCase))
+        {
+            return 2;
+        }
+
+        return 0;
     }
 
     /// <summary>
@@ -328,8 +352,8 @@ public sealed class WindowsOcrService : IOcrService
     private static bool TryParseRowIndex(string profile, out int rowIndex)
     {
         rowIndex = 0;
-        // Profiles: row-3, row-bin-3
-        var m = Regex.Match(profile, @"^row-(?:bin-)?(\d+)$", RegexOptions.IgnoreCase);
+        // Profiles: row-3, row-bin-3, row-context-3
+        var m = Regex.Match(profile, @"^row-(?:bin-|context-)?(\d+)$", RegexOptions.IgnoreCase);
         if (!m.Success)
         {
             return false;

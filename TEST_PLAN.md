@@ -2,7 +2,7 @@
 
 > 用途：真机验证截图 → OCR → 数字提取 → 统计 全链路。测试完成后，把“结果”列回填给我即可决定下一步。
 
-> 自动化已覆盖：纯整数、小数/负数、千分位、百分比、日志单位、日期/IP 过滤。
+> 自动化已覆盖：纯整数、小数/负数、千分位、百分比、日志单位、日期/IP 过滤，以及 18px 深色主题和历史失败截图。
 > 运行：`dotnet test ScreenStat.sln -c Debug`。下面的真机清单只用于自动化覆盖不到的真实屏幕/输入设备场景。
 
 ## 0. 测试前准备
@@ -25,7 +25,8 @@
 
 - 截图原图：`%TEMP%\ScreenStat-last-capture.png`
 - OCR 预处理图：`%TEMP%\ScreenStat-last-ocr.png`
-- 运行日志：`%TEMP%\ScreenStat-startup.log`（含 `OCR numbers=... text=...`）
+- 运行日志：`%TEMP%\ScreenStat-startup.log`（仅启动状态与异常，不记录 OCR 全文）
+- OCR 原文：在结果窗口点击“OCR文本”后粘贴到回填记录
 
 ## 3. 用例清单
 

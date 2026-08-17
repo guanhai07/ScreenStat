@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using System.Globalization;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -55,6 +57,15 @@ internal static class OcrImagePreprocessor
             var rowBin = Binarize(rowGray, 165);
             var bin = UpscaleAndPadFlexible(rowBin, width, row.Height, rowScale, padX: padX, padY: 24);
             candidates.Add(new PreparedImage(bin.bgra, bin.width, bin.height, "row-bin-" + rowIndex));
+
+            // Windows OCR may discard a short standalone value such as "0.5"
+            // even when the glyphs are clear. A non-numeric context label makes
+            // the row look like ordinary text while leaving parsed values intact.
+            var contextual = AddContextLabel(
+                new PreparedImage(pixels, w, h, "row-context-" + rowIndex),
+                row.Height * rowScale,
+                padX);
+            candidates.Add(contextual);
         }
 
         return candidates;
@@ -208,6 +219,55 @@ internal static class OcrImagePreprocessor
         var result = new byte[width * bandHeight];
         Buffer.BlockCopy(gray, y * width, result, 0, result.Length);
         return result;
+    }
+
+    private static PreparedImage AddContextLabel(
+        PreparedImage source,
+        int scaledTextHeight,
+        int contentX)
+    {
+        var bitmap = BitmapSource.Create(
+            source.Width,
+            source.Height,
+            96,
+            96,
+            PixelFormats.Bgra32,
+            null,
+            source.BgraPixels,
+            source.Width * 4);
+
+        var visual = new DrawingVisual();
+        using (var drawing = visual.RenderOpen())
+        {
+            drawing.DrawImage(bitmap, new Rect(0, 0, source.Width, source.Height));
+
+            var fontSize = Math.Clamp(scaledTextHeight * 0.72, 14, 48);
+            var label = new FormattedText(
+                "value:",
+                CultureInfo.InvariantCulture,
+                System.Windows.FlowDirection.LeftToRight,
+                new Typeface("Segoe UI"),
+                fontSize,
+                System.Windows.Media.Brushes.Black,
+                1);
+            var labelX = Math.Max(4, contentX - label.Width - 8);
+            drawing.DrawText(
+                label,
+                new System.Windows.Point(labelX, Math.Max(0, (source.Height - label.Height) / 2)));
+        }
+
+        var rendered = new RenderTargetBitmap(
+            source.Width,
+            source.Height,
+            96,
+            96,
+            PixelFormats.Pbgra32);
+        rendered.Render(visual);
+
+        var converted = new FormatConvertedBitmap(rendered, PixelFormats.Bgra32, null, 0);
+        var pixels = new byte[source.Width * source.Height * 4];
+        converted.CopyPixels(pixels, source.Width * 4, 0);
+        return source with { BgraPixels = pixels };
     }
 
     private static int ChooseScale(int width, int height)

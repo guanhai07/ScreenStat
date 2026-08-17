@@ -21,4 +21,10 @@
     <ProjectReference Include="..\..\src\ScreenStat.App\ScreenStat.App.csproj" />
     <ProjectReference Include="..\..\src\ScreenStat.Core\ScreenStat.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\pic\PixPin_2026-08-12_16-11-23.png"
+          Link="Fixtures\recorded-dark-theme.png"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
