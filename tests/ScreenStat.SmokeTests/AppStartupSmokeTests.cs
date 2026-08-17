@@ -16,7 +16,8 @@ public class AppStartupSmokeTests
             File.Delete(logPath);
         }
 
-        var psi = new ProcessStartInfo("dotnet", $"\"{appDll}\"")
+        var dotnetHost = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet";
+        var psi = new ProcessStartInfo(dotnetHost, $"\"{appDll}\"")
         {
             UseShellExecute = false,
             CreateNoWindow = true,

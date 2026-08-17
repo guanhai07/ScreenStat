@@ -95,7 +95,7 @@ git diff --check
 | 阶段 | 内容 | 验收标准 | 计划提交信息 | 状态 |
 |---|---|---|---|---|
 | V2-0 | 保存现有 OCR 修复基线 | 31/31 测试通过 | `fix(ocr): improve small dark text recognition` | ✅ `5f86947` |
-| V2-1 | 迁移 .NET 10 | 全项目以 net10 构建测试 | `chore: migrate ScreenStat to .NET 10` | ⏳ |
+| V2-1 | 迁移 .NET 10 | 全项目以 net10 构建测试 | `chore: migrate ScreenStat to .NET 10` | ✅ 本提交 |
 | V2-2 | OCR/列领域模型和聚类算法 | 单列、多列、错位、低置信度测试通过 | `feat(core): add coordinate based column analysis` | ⏳ |
 | V2-3 | RapidOcrNet 本地引擎 | 真实截图返回坐标、文本、置信度；无网络 | `feat(ocr): add local ONNX layout OCR` | ⏳ |
 | V2-4 | 工作流接入与 Windows OCR 回退 | 主引擎失败时可回退；错误可见 | `feat(app): integrate local OCR with fallback` | ⏳ |

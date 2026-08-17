@@ -15,7 +15,7 @@ Windows 屏幕框选数字统计工具。
 ## 开发环境
 
 - Windows 10/11
-- .NET 7 SDK（当前仓库目标框架；可升级到 .NET 8/10）
+- .NET 10 SDK
 - 需要系统安装 OCR 语言包（中文/英文光学字符识别）
 
 ## 构建
@@ -42,7 +42,7 @@ dotnet publish src/ScreenStat.App/ScreenStat.App.csproj -c Release -r win-x64 --
 
 生成的主程序：`publish/single-exe/ScreenStat.exe`（单个 exe，无需安装 .NET Runtime，约 77 MB）。
 
-框架依赖版（约 21 MB，但目标机器需安装 .NET 7 Desktop Runtime）：
+框架依赖版（体积更小，但目标机器需安装 .NET 10 Desktop Runtime）：
 
 ```powershell
 dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/framework-dependent
@@ -54,7 +54,7 @@ dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained false -
 
 - 自包含单文件版：启用 `EnableCompressionInSingleFile` 并把原生库压缩后内嵌进 exe，约 77 MB。
 - 未压缩自包含版：`dotnet publish src/ScreenStat.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64`，约 172 MB。
-- 框架依赖版：不打包 Runtime，约 21 MB，但目标机器必须安装 .NET 7 Desktop Runtime。
+- 框架依赖版：不打包 Runtime，体积以实际发布结果为准，但目标机器必须安装 .NET 10 Desktop Runtime。
 
 ## 使用
 
