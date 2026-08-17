@@ -87,7 +87,7 @@ public static class OcrTextNormalizer
             }
 
             // single-digit broken pieces only
-            line = Regex.Replace(line, @"\b(\d)\s+(\d{1,2})\b", "$1$2");
+            line = Regex.Replace(line, @"(?<![.])\b(\d)\s+(\d{1,2})\b", "$1$2");
 
             if (!Regex.IsMatch(line, @"^[\d\s,.\-]+(?:\s*[A-Za-z%]{1,4})?$"))
             {
