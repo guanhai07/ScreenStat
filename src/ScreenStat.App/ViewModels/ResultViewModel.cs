@@ -1,8 +1,9 @@
-﻿using System.Text;
-using System.Windows.Media.Imaging;
+using System.Collections.ObjectModel;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ScreenStat.App.Services;
+using ScreenStat.Core.Analysis;
 using ScreenStat.Core.Models;
 using ScreenStat.Core.Parsing;
 using ScreenStat.Core.Statistics;
@@ -13,29 +14,37 @@ public partial class ResultViewModel : ObservableObject
 {
     private readonly ClipboardService _clipboardService;
     private readonly NumberParser _numberParser = new();
+    private readonly NumericRegionParser _regionParser = new();
+    private readonly CoordinateColumnAnalyzer _columnAnalyzer = new();
+    private bool _suppressNumbersRebuild;
+    private bool _isLayoutResult;
+    private string? _recognitionWarning;
 
     [ObservableProperty] private string _title = "ScreenStat";
     [ObservableProperty] private string _statusText = "正在识别...";
     [ObservableProperty] private bool _isBusy = true;
     [ObservableProperty] private bool _hasStatistics;
+    [ObservableProperty] private bool _hasColumns;
     [ObservableProperty] private string _ocrText = string.Empty;
     [ObservableProperty] private string _numbersText = string.Empty;
     [ObservableProperty] private string _summaryText = string.Empty;
     [ObservableProperty] private string? _errorText;
-
-    private StatisticsResult _statistics = StatisticsResult.Empty;
-    private IReadOnlyList<NumberValue> _numbers = Array.Empty<NumberValue>();
-    private bool _suppressNumbersRebuild;
 
     public ResultViewModel(ClipboardService clipboardService)
     {
         _clipboardService = clipboardService;
     }
 
+    public ObservableCollection<ResultColumnViewModel> Columns { get; } = new();
+
     public void ShowLoading()
     {
+        ClearColumns();
+        _isLayoutResult = false;
+        _recognitionWarning = null;
         IsBusy = true;
         HasStatistics = false;
+        HasColumns = false;
         StatusText = "正在识别...";
         ErrorText = null;
         SummaryText = string.Empty;
@@ -46,45 +55,34 @@ public partial class ResultViewModel : ObservableObject
     public void ApplyOcrSuccess(OcrResult ocr)
     {
         OcrText = ocr.FullText ?? string.Empty;
-        ApplyRecognizedText();
+        _isLayoutResult = false;
+        _recognitionWarning = null;
+        ApplyLegacyText(OcrText);
     }
 
     public void ApplyLayoutSuccess(OcrDocument document)
     {
         OcrText = document.FullText;
-        ApplyRecognizedText();
+        _isLayoutResult = true;
+        _recognitionWarning = document.WarningMessage;
 
-        if (!string.IsNullOrWhiteSpace(document.WarningMessage))
+        var numericColumns = _columnAnalyzer.Analyze(_regionParser.Parse(document));
+        if (numericColumns.Count == 0)
         {
-            ErrorText = document.WarningMessage;
-            StatusText += "（已回退）";
-        }
-    }
-
-    private void ApplyRecognizedText()
-    {
-        var numbers = _numberParser.Parse(OcrText);
-        IsBusy = false;
-
-        if (numbers.Count == 0)
-        {
-            _numbers = Array.Empty<NumberValue>();
-            _statistics = StatisticsResult.Empty;
+            ClearColumns();
+            IsBusy = false;
+            HasColumns = false;
             HasStatistics = false;
             StatusText = "未识别到数字";
             ErrorText = string.IsNullOrWhiteSpace(OcrText)
                 ? "OCR 未返回文本。"
-                : "OCR 成功，但没有提取到可统计的数字。可查看 OCR 原文。";
+                : "OCR 返回了文字，但没有可统计的数字。可展开查看 OCR 原文。";
             SummaryText = string.Empty;
             SetNumbersText(string.Empty);
+            return;
         }
-        else
-        {
-            SetNumbersText(string.Join(
-                Environment.NewLine,
-                numbers.Select(n => n.OriginalText ?? n.Value.ToString("G"))));
-            RebuildFromNumbersText(NumbersText);
-        }
+
+        ApplyColumns(numericColumns);
     }
 
     partial void OnNumbersTextChanged(string value)
@@ -94,12 +92,16 @@ public partial class ResultViewModel : ObservableObject
             return;
         }
 
-        RebuildFromNumbersText(value);
+        _isLayoutResult = false;
+        _recognitionWarning = null;
+        ApplyLegacyText(value);
     }
 
     public void ApplyFailure(string message)
     {
+        ClearColumns();
         IsBusy = false;
+        HasColumns = false;
         HasStatistics = false;
         StatusText = "识别失败";
         ErrorText = message;
@@ -108,34 +110,154 @@ public partial class ResultViewModel : ObservableObject
     [RelayCommand]
     private void CopyStatistics()
     {
-        if (!HasStatistics)
+        if (HasStatistics)
         {
-            return;
+            _clipboardService.SetText(SummaryText);
         }
-
-        _clipboardService.SetText(SummaryText);
     }
 
     [RelayCommand]
     private void CopyNumbers()
     {
-        if (_numbers.Count == 0)
+        var text = BuildTabSeparatedNumbers();
+        if (!string.IsNullOrWhiteSpace(text))
         {
-            return;
+            _clipboardService.SetText(text);
         }
-
-        _clipboardService.SetText(NumbersText);
     }
 
     [RelayCommand]
     private void CopyOcrText()
     {
-        if (string.IsNullOrWhiteSpace(OcrText))
+        if (!string.IsNullOrWhiteSpace(OcrText))
         {
+            _clipboardService.SetText(OcrText);
+        }
+    }
+
+    private void ApplyLegacyText(string? text)
+    {
+        var numbers = _numberParser.Parse(text ?? string.Empty);
+        if (numbers.Count == 0)
+        {
+            ClearColumns();
+            IsBusy = false;
+            HasColumns = false;
+            HasStatistics = false;
+            SummaryText = string.Empty;
+            StatusText = "未识别到数字";
+            ErrorText = "请每行输入一个数字，例如：12.5 或 123ms。";
+            SetNumbersText(text ?? string.Empty);
             return;
         }
 
-        _clipboardService.SetText(OcrText);
+        var tokens = numbers
+            .Select((number, index) => new NumericToken
+            {
+                Value = number.Value,
+                OriginalText = number.OriginalText ?? number.Value.ToString("G"),
+                Unit = number.Unit,
+                Bounds = new OcrBounds(0, index * 20, 60, 18),
+                Confidence = 1,
+                SourceOrder = index
+            })
+            .ToArray();
+        ApplyColumns(
+        [
+            new NumericColumn
+            {
+                Index = 1,
+                Tokens = tokens,
+                Statistics = StatisticsCalculator.Calculate(tokens.Select(token => token.Value).ToArray())
+            }
+        ]);
+    }
+
+    private void ApplyColumns(IReadOnlyList<NumericColumn> numericColumns)
+    {
+        ClearColumns();
+        foreach (var numericColumn in numericColumns)
+        {
+            var column = new ResultColumnViewModel(numericColumn);
+            column.Changed += OnColumnChanged;
+            Columns.Add(column);
+        }
+
+        IsBusy = false;
+        HasColumns = Columns.Count > 0;
+        RefreshAggregate();
+    }
+
+    private void OnColumnChanged(object? sender, EventArgs e) => RefreshAggregate();
+
+    private void RefreshAggregate()
+    {
+        HasStatistics = Columns.Any(column => column.HasStatistics);
+        var includedCount = Columns.Sum(column => column.IncludedCount);
+        var lowConfidenceCount = Columns.Sum(column => column.LowConfidenceCount);
+
+        SummaryText = string.Join(
+            Environment.NewLine + Environment.NewLine,
+            Columns
+                .Where(column => column.HasStatistics)
+                .Select(column => Columns.Count == 1
+                    ? column.SummaryText
+                    : $"[{column.Header}]{Environment.NewLine}{column.SummaryText}"));
+        SetNumbersText(BuildTabSeparatedNumbers());
+
+        if (_isLayoutResult)
+        {
+            StatusText = $"已识别 {Columns.Count} 列，共 {includedCount} 个数字";
+            if (lowConfidenceCount > 0)
+            {
+                StatusText += $"，{lowConfidenceCount} 项请复核";
+            }
+        }
+        else
+        {
+            StatusText = $"已识别 {includedCount} 个数字";
+        }
+
+        ErrorText = _recognitionWarning;
+    }
+
+    private string BuildTabSeparatedNumbers()
+    {
+        if (Columns.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var valuesByColumn = Columns
+            .Select(column => column.Items
+                .Where(item => item.IsIncluded && !item.HasParseError)
+                .Select(item => item.Text.Trim())
+                .ToArray())
+            .ToArray();
+        var rowCount = valuesByColumn.Max(values => values.Length);
+        var builder = new StringBuilder();
+        for (var row = 0; row < rowCount; row++)
+        {
+            if (row > 0)
+            {
+                builder.AppendLine();
+            }
+
+            for (var column = 0; column < valuesByColumn.Length; column++)
+            {
+                if (column > 0)
+                {
+                    builder.Append('\t');
+                }
+
+                if (row < valuesByColumn[column].Length)
+                {
+                    builder.Append(valuesByColumn[column][row]);
+                }
+            }
+        }
+
+        return builder.ToString();
     }
 
     private void SetNumbersText(string value)
@@ -151,69 +273,13 @@ public partial class ResultViewModel : ObservableObject
         }
     }
 
-    private void RebuildFromNumbersText(string? text)
+    private void ClearColumns()
     {
-        if (string.IsNullOrWhiteSpace(text))
+        foreach (var column in Columns)
         {
-            _numbers = Array.Empty<NumberValue>();
-            _statistics = StatisticsResult.Empty;
-            HasStatistics = false;
-            SummaryText = string.Empty;
-            StatusText = "未识别到数字";
-            ErrorText = "请每行输入一个数字，例如：12.5 或 123ms。";
-            return;
+            column.Changed -= OnColumnChanged;
         }
 
-        _numbers = _numberParser.Parse(text);
-        if (_numbers.Count == 0)
-        {
-            _statistics = StatisticsResult.Empty;
-            HasStatistics = false;
-            SummaryText = string.Empty;
-            StatusText = "没有可统计的数字";
-            ErrorText = "请每行输入一个数字，例如：12.5 或 123ms。";
-            return;
-        }
-
-        _statistics = StatisticsCalculator.Calculate(_numbers);
-        SummaryText = BuildSummary(_statistics, _numbers);
-        HasStatistics = true;
-        StatusText = $"已识别 {_numbers.Count} 个数字";
-        ErrorText = null;
-    }
-
-    private static string BuildSummary(StatisticsResult stats, IReadOnlyList<NumberValue> numbers)
-    {
-        var unit = InferCommonUnit(numbers);
-        var unitSuffix = string.IsNullOrEmpty(unit) ? string.Empty : " " + unit;
-
-        var sb = new StringBuilder();
-        sb.AppendLine($"Count     {stats.Count}");
-        sb.AppendLine($"Sum       {Format(stats.Sum)}{unitSuffix}");
-        sb.AppendLine($"Average   {Format(stats.Average)}{unitSuffix}");
-        sb.AppendLine($"Min       {Format(stats.Min)}{unitSuffix}");
-        sb.AppendLine($"Max       {Format(stats.Max)}{unitSuffix}");
-        sb.AppendLine($"Median    {Format(stats.Median)}{unitSuffix}");
-        sb.AppendLine($"P90       {Format(stats.P90)}{unitSuffix}");
-        sb.AppendLine($"P95       {Format(stats.P95)}{unitSuffix}");
-        sb.Append($"P99       {Format(stats.P99)}{unitSuffix}");
-        return sb.ToString();
-    }
-
-    private static string? InferCommonUnit(IReadOnlyList<NumberValue> numbers)
-    {
-        var units = numbers.Select(n => n.Unit).Where(u => !string.IsNullOrWhiteSpace(u)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        return units.Count == 1 ? units[0] : null;
-    }
-
-    private static string Format(double value)
-    {
-        if (Math.Abs(value - Math.Round(value)) < 0.0000001)
-        {
-            return ((long)Math.Round(value)).ToString();
-        }
-
-        return value.ToString("0.##");
+        Columns.Clear();
     }
 }
-
