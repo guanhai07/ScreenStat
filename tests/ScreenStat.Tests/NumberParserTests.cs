@@ -119,6 +119,8 @@ public class NumberParserTests
     [Theory]
     [InlineData("O", 0d)]
     [InlineData("o", 0d)]
+    [InlineData("Q", 0d)]
+    [InlineData("D", 0d)]
     [InlineData("O.O", 0d)]
     [InlineData("I", 1d)]
     [InlineData("l", 1d)]

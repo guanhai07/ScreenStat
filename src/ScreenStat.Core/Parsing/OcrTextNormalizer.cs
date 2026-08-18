@@ -8,11 +8,12 @@ namespace ScreenStat.Core.Parsing;
 /// </summary>
 public static class OcrTextNormalizer
 {
-    // Only O/o/l/I are repaired without digit context. S, B and Z stay
-    // context-bound because a lone "S" or "B" is plausibly a real label
-    // (size or grade column) rather than a damaged 5 or 8.
+    // Only the round/vertical-stroke look-alikes are repaired without digit
+    // context: a narrow "0" comes back as O, o, Q or D and a "1" as l or I.
+    // S, B and Z stay context-bound because a standalone one is plausibly a
+    // real label (size or grade column) rather than a damaged 5, 8 or 2.
     private static readonly Regex IsolatedDigitLookAlikeRegex = new(
-        @"^[0-9OolI|,.\-+%]+$",
+        @"^[0-9OoQDlI|,.\-+%]+$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>
@@ -49,7 +50,7 @@ public static class OcrTextNormalizer
         {
             builder.Append(ch switch
             {
-                'O' or 'o' => '0',
+                'O' or 'o' or 'Q' or 'D' => '0',
                 'l' or 'I' or '|' => '1',
                 _ => ch
             });
