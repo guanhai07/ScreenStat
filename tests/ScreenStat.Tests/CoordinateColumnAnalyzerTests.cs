@@ -110,6 +110,41 @@ public class CoordinateColumnAnalyzerTests
         Assert.Equal("%", tokens[1].Unit);
     }
 
+    [Fact]
+    public void NumericRegionParser_KeepsZeroCellsReadAsLetterO()
+    {
+        // PP-OCRv5 has no context inside a one-glyph box, so a lone "0" cell
+        // frequently comes back as "O". Those rows used to disappear entirely.
+        var texts = new[] { "1200", "O", "845", "O", "1130", "0", "970", "O", "1005" };
+        var document = new OcrDocument
+        {
+            Success = true,
+            Engine = "test",
+            Regions = texts
+                .Select((text, index) => new OcrRegion
+                {
+                    Text = text,
+                    Bounds = new OcrBounds(40, index * 22, 46, 16),
+                    Confidence = 0.93,
+                    SourceOrder = index
+                })
+                .ToArray()
+        };
+
+        var tokens = new NumericRegionParser().Parse(document);
+        var column = Assert.Single(new CoordinateColumnAnalyzer().Analyze(tokens));
+
+        Assert.Equal(9, column.Tokens.Count);
+        Assert.Equal(
+            new[] { 1200d, 0, 845, 0, 1130, 0, 970, 0, 1005 },
+            column.Tokens.Select(token => token.Value));
+
+        // Repaired cells stay visible for review; the clean "0" does not.
+        Assert.Equal(3, column.Tokens.Count(token => token.IsCorrected));
+        Assert.Equal(3, column.LowConfidenceCount);
+        Assert.False(column.Tokens[5].IsCorrected);
+    }
+
     private static NumericToken Token(
         double value,
         double left,

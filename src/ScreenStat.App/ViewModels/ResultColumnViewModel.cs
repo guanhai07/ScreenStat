@@ -57,7 +57,9 @@ public partial class ResultColumnViewModel : ObservableObject
         var included = new List<NumberValue>();
         foreach (var item in Items)
         {
-            var parsed = _parser.Parse(item.Text);
+            // Each row holds one cell, so the same look-alike repair the region
+            // parser applies is valid for manual edits too.
+            var parsed = _parser.Parse(item.Text, isolatedToken: true);
             item.HasParseError = parsed.Count != 1;
             if (item.IsIncluded && parsed.Count == 1)
             {

@@ -115,4 +115,51 @@ public class NumberParserTests
         Assert.Empty(_parser.Parse(""));
         Assert.Empty(_parser.Parse("   "));
     }
+
+    [Theory]
+    [InlineData("O", 0d)]
+    [InlineData("o", 0d)]
+    [InlineData("O.O", 0d)]
+    [InlineData("I", 1d)]
+    [InlineData("l", 1d)]
+    [InlineData("1O", 10d)]
+    [InlineData("1OO", 100d)]
+    public void Parse_IsolatedCell_RepairsStandaloneDigitLookAlikes(string text, double expected)
+    {
+        var values = _parser.Parse(text, isolatedToken: true);
+
+        var value = Assert.Single(values);
+        Assert.Equal(expected, value.Value);
+        Assert.True(value.IsCorrected);
+    }
+
+    [Fact]
+    public void Parse_IsolatedCell_DoesNotFlagCleanNumbers()
+    {
+        var values = _parser.Parse("12.5%", isolatedToken: true);
+
+        var value = Assert.Single(values);
+        Assert.Equal(12.5, value.Value);
+        Assert.False(value.IsCorrected);
+    }
+
+    [Theory]
+    [InlineData("latency")]
+    [InlineData("OK")]
+    [InlineData("ms")]
+    [InlineData("Ill")]
+    [InlineData("S")]
+    [InlineData("B")]
+    public void Parse_IsolatedCell_DoesNotInventNumbersFromText(string text)
+    {
+        Assert.Empty(_parser.Parse(text, isolatedToken: true));
+    }
+
+    [Fact]
+    public void Parse_FreeText_KeepsConservativeLookAlikeRule()
+    {
+        // The prose path must not turn a standalone letter into a digit.
+        Assert.Empty(_parser.Parse("O"));
+        Assert.Equal(new[] { 42d }, _parser.Parse("latency 42").Select(v => v.Value));
+    }
 }

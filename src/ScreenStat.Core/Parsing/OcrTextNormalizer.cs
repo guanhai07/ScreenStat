@@ -8,6 +8,56 @@ namespace ScreenStat.Core.Parsing;
 /// </summary>
 public static class OcrTextNormalizer
 {
+    // Only O/o/l/I are repaired without digit context. S, B and Z stay
+    // context-bound because a lone "S" or "B" is plausibly a real label
+    // (size or grade column) rather than a damaged 5 or 8.
+    private static readonly Regex IsolatedDigitLookAlikeRegex = new(
+        @"^[0-9OolI|,.\-+%]+$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Repairs digit look-alikes in text that is known to be one isolated cell
+    /// — a single OCR region or a single manually edited row — rather than
+    /// prose. The recognizer has no context inside a one-glyph box, so a lone
+    /// "0" commonly comes back as "O" and a lone "1" as "l" or "I"; the
+    /// adjacency rules in <see cref="Normalize"/> cannot repair those because
+    /// they require a neighbouring digit. Returns the input unchanged whenever
+    /// the token could still be real text.
+    /// </summary>
+    public static string RepairIsolatedNumericToken(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return text;
+        }
+
+        var trimmed = text.Trim();
+        if (!IsolatedDigitLookAlikeRegex.IsMatch(trimmed))
+        {
+            return text;
+        }
+
+        // With no digit to anchor on, allow at most two look-alike letters so
+        // "O" and "O.O" are repaired while "Ill" or "OOO" are left alone.
+        if (!trimmed.Any(char.IsDigit) && trimmed.Count(char.IsLetter) > 2)
+        {
+            return text;
+        }
+
+        var builder = new StringBuilder(text.Length);
+        foreach (var ch in text)
+        {
+            builder.Append(ch switch
+            {
+                'O' or 'o' => '0',
+                'l' or 'I' or '|' => '1',
+                _ => ch
+            });
+        }
+
+        return builder.ToString();
+    }
+
     public static string Normalize(string text)
     {
         if (string.IsNullOrWhiteSpace(text))

@@ -17,7 +17,9 @@ public sealed class NumericRegionParser
         var tokens = new List<NumericToken>();
         foreach (var region in document.Regions)
         {
-            var numbers = _numberParser.Parse(region.Text);
+            // A region is one detected cell, not prose, so standalone digit
+            // look-alikes such as "O" for 0 can be repaired safely.
+            var numbers = _numberParser.Parse(region.Text, isolatedToken: true);
             for (var index = 0; index < numbers.Count; index++)
             {
                 var number = numbers[index];
@@ -28,7 +30,8 @@ public sealed class NumericRegionParser
                     Unit = number.Unit,
                     Bounds = ProjectBounds(region.Bounds, index, numbers.Count),
                     Confidence = Math.Clamp(region.Confidence, 0, 1),
-                    SourceOrder = region.SourceOrder
+                    SourceOrder = region.SourceOrder,
+                    IsCorrected = number.IsCorrected
                 });
             }
         }

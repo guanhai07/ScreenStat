@@ -41,14 +41,30 @@ public sealed class NumberParser : INumberParser
         @"(?<![A-Za-z0-9.])(?<number>-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)(?:\s*(?<unit>%|ms|us|μs|ns|sec|secs|second|seconds|KB|MB|GB|TB|kb|mb|gb|tb|m|h|s|[A-Za-z]{1,6}))?(?![A-Za-z0-9.])",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    public IReadOnlyList<NumberValue> Parse(string text)
+    public IReadOnlyList<NumberValue> Parse(string text) => Parse(text, isolatedToken: false);
+
+    /// <param name="isolatedToken">
+    /// True when <paramref name="text"/> is one OCR region or one manually
+    /// edited row instead of a block of prose. Standalone digit look-alikes are
+    /// then repaired and the resulting values are marked
+    /// <see cref="NumberValue.IsCorrected"/> so they surface for review.
+    /// </param>
+    public IReadOnlyList<NumberValue> Parse(string text, bool isolatedToken)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             return Array.Empty<NumberValue>();
         }
 
-        var normalized = OcrTextNormalizer.Normalize(text);
+        var source = text;
+        var corrected = false;
+        if (isolatedToken)
+        {
+            source = OcrTextNormalizer.RepairIsolatedNumericToken(text);
+            corrected = !string.Equals(source, text, StringComparison.Ordinal);
+        }
+
+        var normalized = OcrTextNormalizer.Normalize(source);
         var flat = OcrTextNormalizer.FlattenWhitespace(normalized);
         var sanitized = MaskNonStatPatterns(flat);
 
@@ -67,7 +83,8 @@ public sealed class NumberParser : INumberParser
                 Value = value,
                 OriginalText = match.Value.Trim(),
                 Unit = string.IsNullOrWhiteSpace(unit) ? null : unit,
-                Position = match.Index
+                Position = match.Index,
+                IsCorrected = corrected
             });
         }
 
@@ -103,7 +120,8 @@ public sealed class NumberParser : INumberParser
                     {
                         Value = merged,
                         OriginalText = combined,
-                        Position = a.Position
+                        Position = a.Position,
+                        IsCorrected = a.IsCorrected || values[i + 1].IsCorrected
                     });
                     i++;
                     continue;

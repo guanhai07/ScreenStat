@@ -8,5 +8,6 @@ public sealed class NumericToken
     public required OcrBounds Bounds { get; init; }
     public double Confidence { get; init; }
     public int SourceOrder { get; init; }
-    public bool IsLowConfidence => Confidence < 0.75;
+    public bool IsCorrected { get; init; }
+    public bool IsLowConfidence => Confidence < 0.75 || IsCorrected;
 }
