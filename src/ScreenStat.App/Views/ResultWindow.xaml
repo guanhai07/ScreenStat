@@ -18,6 +18,32 @@
       <Setter Property="Padding" Value="10,5" />
       <Setter Property="MinWidth" Value="90" />
     </Style>
+    <!-- The window sets a near-white Foreground that the default light chrome
+         of DataGridColumnHeader and TabItem inherits, leaving the header text
+         invisible against its own background. Give both explicit dark-theme
+         colours instead of relying on inheritance. -->
+    <Style TargetType="DataGridColumnHeader">
+      <Setter Property="Background" Value="#FF333333" />
+      <Setter Property="Foreground" Value="#FFF3F3F3" />
+      <Setter Property="BorderBrush" Value="#FF484848" />
+      <Setter Property="BorderThickness" Value="0,0,1,1" />
+      <Setter Property="Padding" Value="8,6" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style TargetType="TabItem">
+      <Setter Property="Background" Value="#FF2B2B2B" />
+      <Setter Property="Foreground" Value="#FFDDDDDD" />
+      <Setter Property="BorderBrush" Value="#FF484848" />
+      <Setter Property="Padding" Value="10,5" />
+      <Style.Triggers>
+        <Trigger Property="IsSelected" Value="True">
+          <Setter Property="Background" Value="#FF3A3A3A" />
+          <Setter Property="Foreground" Value="#FFFFFFFF" />
+          <Setter Property="FontWeight" Value="SemiBold" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
   </Window.Resources>
 
   <Grid Margin="16">
