@@ -40,7 +40,11 @@ if (Test-Path -LiteralPath $zipPath) {
     Remove-Item -LiteralPath $zipPath -Force
 }
 
-& tar.exe -a -c -f $zipPath -C $publishDirectory .
+# Use the absolute path: when this script is launched from a Git Bash shell,
+# a bare "tar.exe" resolves to Git's /usr/bin/tar, which reads "D:\..." as a
+# remote host and fails with "Cannot connect to D: resolve failed".
+$tarPath = Join-Path $env:SystemRoot "System32\tar.exe"
+& $tarPath -a -c -f $zipPath -C $publishDirectory .
 if ($LASTEXITCODE -ne 0) {
     throw "ZIP packaging failed with exit code $LASTEXITCODE"
 }
