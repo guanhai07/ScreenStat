@@ -22,7 +22,13 @@ public sealed class RapidLayoutOcrService : ILayoutOcrService, IDisposable
         ReturnSingleCharBox = false,
         TextScore = 0.30f,
         ImgResize = 0,
-        Padding = 24
+        Padding = 24,
+        // DBNet predicts a shrunk text mask and dilates it back by UnClipRatio.
+        // At the library default of 1.6 the mask for a lone thin glyph — most
+        // often a single "1" in its own table cell — stays too small to survive
+        // box filtering, so that row is dropped before recognition ever sees it.
+        // 2.5 recovers those cells; 3.0 over-dilates and starts losing others.
+        UnClipRatio = 2.5f
     };
 
     private static readonly RapidOcrOptions NarrowColumnOptions = BaseScreenshotOptions with
