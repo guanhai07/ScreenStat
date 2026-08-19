@@ -16,14 +16,23 @@ public static class OcrTextNormalizer
         @"^[0-9OoQDlI|,.\-+%]+$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    // A comma trailed by one or two digits cannot be a thousands separator,
+    // which always groups exactly three. In an isolated numeric cell it is a
+    // decimal point the recognizer read as a comma — common in percentage
+    // columns, where "7.17%" comes back as "7,17%".
+    private static readonly Regex DecimalCommaRegex = new(
+        @",(?=\d{1,2}(?!\d))",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     /// <summary>
     /// Repairs digit look-alikes in text that is known to be one isolated cell
     /// — a single OCR region or a single manually edited row — rather than
     /// prose. The recognizer has no context inside a one-glyph box, so a lone
     /// "0" commonly comes back as "O" and a lone "1" as "l" or "I"; the
     /// adjacency rules in <see cref="Normalize"/> cannot repair those because
-    /// they require a neighbouring digit. Returns the input unchanged whenever
-    /// the token could still be real text.
+    /// they require a neighbouring digit. A decimal point read as a comma is
+    /// repaired here too. Returns the input unchanged whenever the token could
+    /// still be real text.
     /// </summary>
     public static string RepairIsolatedNumericToken(string text)
     {
@@ -56,7 +65,10 @@ public static class OcrTextNormalizer
             });
         }
 
-        return builder.ToString();
+        // After the look-alike pass, so "7,l7%" is repaired to "7.17%" too.
+        // Left until last because a real thousands separator must survive:
+        // "1,234" keeps its comma and Normalize collapses it to 1234.
+        return DecimalCommaRegex.Replace(builder.ToString(), ".");
     }
 
     public static string Normalize(string text)

@@ -164,4 +164,44 @@ public class NumberParserTests
         Assert.Empty(_parser.Parse("O"));
         Assert.Equal(new[] { 42d }, _parser.Parse("latency 42").Select(v => v.Value));
     }
+
+    [Theory]
+    [InlineData("7,17%", 7.17)]
+    [InlineData("7,01%", 7.01)]
+    [InlineData("1,76%", 1.76)]
+    [InlineData("6,2", 6.2)]
+    [InlineData("7,l7%", 7.17)]
+    public void Parse_IsolatedCell_ReadsACommaWithTooFewDigitsAsADecimalPoint(string text, double expected)
+    {
+        // A percentage column recognized against a light background regularly
+        // returns the decimal point as a comma. Left alone, the thousands rule
+        // rejects the group and the cell parses as two separate numbers, which
+        // also drags a phantom column into the layout analysis.
+        var values = _parser.Parse(text, isolatedToken: true);
+
+        var value = Assert.Single(values);
+        Assert.Equal(expected, value.Value);
+        Assert.True(value.IsCorrected);
+    }
+
+    [Theory]
+    [InlineData("1,234", 1234d)]
+    [InlineData("12,345", 12345d)]
+    [InlineData("1,234,567", 1234567d)]
+    public void Parse_IsolatedCell_LeavesRealThousandsSeparatorsAlone(string text, double expected)
+    {
+        var values = _parser.Parse(text, isolatedToken: true);
+
+        var value = Assert.Single(values);
+        Assert.Equal(expected, value.Value);
+        Assert.False(value.IsCorrected);
+    }
+
+    [Fact]
+    public void Parse_FreeText_DoesNotRewriteCommas()
+    {
+        // Outside a single cell a comma is punctuation far more often than a
+        // damaged decimal point.
+        Assert.Equal(new[] { 7d, 17d }, _parser.Parse("7,17").Select(v => v.Value));
+    }
 }
