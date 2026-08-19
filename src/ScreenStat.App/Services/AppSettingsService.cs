@@ -24,17 +24,25 @@ public sealed class AppSettingsService
     private AppSettings _settings;
 
     public AppSettingsService()
+        : this(DefaultPath())
     {
-        _path = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ScreenStat",
-            "settings.json");
+    }
+
+    /// <summary>Overload for tests, so they never touch the real user profile.</summary>
+    public AppSettingsService(string settingsPath)
+    {
+        _path = settingsPath;
         _forcedOn = string.Equals(
             Environment.GetEnvironmentVariable(ForceEnableVariableName)?.Trim(),
             "1",
             StringComparison.Ordinal);
         _settings = Load(_path);
     }
+
+    private static string DefaultPath() => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "ScreenStat",
+        "settings.json");
 
     /// <summary>True when the environment pins collection on and the UI must not turn it off.</summary>
     public bool IsDatasetCaptureForced => _forcedOn;

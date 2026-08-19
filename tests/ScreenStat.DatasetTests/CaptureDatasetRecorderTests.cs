@@ -49,7 +49,7 @@ public sealed class CaptureDatasetRecorderTests : IDisposable
         const int width = 7;
         const int height = 5;
         var expected = BuildPixels(width, height);
-        var recorder = new CaptureDatasetRecorder(new AppSettingsService());
+        var recorder = CreateRecorder();
 
         var session = recorder.TryBeginCapture(CreateImage(width, height, expected), width, height);
 
@@ -66,7 +66,7 @@ public sealed class CaptureDatasetRecorderTests : IDisposable
     public void BeginCapture_ReturnsNullWhenCollectionIsOff()
     {
         Environment.SetEnvironmentVariable(EnableVariable, null);
-        var recorder = new CaptureDatasetRecorder(new AppSettingsService());
+        var recorder = CreateRecorder();
 
         Assert.Null(recorder.TryBeginCapture(CreateImage(2, 2, BuildPixels(2, 2)), 2, 2));
         Assert.False(Directory.Exists(_root));
@@ -75,7 +75,7 @@ public sealed class CaptureDatasetRecorderTests : IDisposable
     [Fact]
     public void Discard_RemovesTheWholeCaptureDirectory()
     {
-        var recorder = new CaptureDatasetRecorder(new AppSettingsService());
+        var recorder = CreateRecorder();
         var session = recorder.TryBeginCapture(CreateImage(3, 3, BuildPixels(3, 3)), 3, 3);
         Assert.NotNull(session);
 
@@ -84,6 +84,13 @@ public sealed class CaptureDatasetRecorderTests : IDisposable
         Assert.False(Directory.Exists(session.DirectoryPath));
         Assert.True(session.IsDiscarded);
     }
+
+    /// <summary>
+    /// Points the settings file at the temporary root. Without this the tests
+    /// would read the developer's own saved toggle and flip with it.
+    /// </summary>
+    private CaptureDatasetRecorder CreateRecorder() =>
+        new(new AppSettingsService(Path.Combine(_root, "settings.json")));
 
     private static byte[] BuildPixels(int width, int height)
     {
