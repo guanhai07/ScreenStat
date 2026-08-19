@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using ScreenStat.Core.Dataset;
 using ScreenStat.Core.Models;
 using ScreenStat.Core.Parsing;
 using ScreenStat.Core.Statistics;
@@ -16,6 +18,7 @@ public partial class ResultColumnViewModel : ObservableObject
     [ObservableProperty] private string _summaryText = string.Empty;
     [ObservableProperty] private string _statusText = string.Empty;
     [ObservableProperty] private bool _hasStatistics;
+    [ObservableProperty] private RecognizedNumberViewModel? _selectedItem;
 
     public ResultColumnViewModel(NumericColumn column)
     {
@@ -44,6 +47,30 @@ public partial class ResultColumnViewModel : ObservableObject
 
     public event EventHandler? Changed;
 
+    /// <summary>
+    /// Adds an empty row for a cell OCR missed entirely. It goes after the
+    /// selected row rather than at the end, because a dataset row only means
+    /// something if it sits in the right position in the column.
+    /// </summary>
+    [RelayCommand]
+    private void InsertRow()
+    {
+        var row = RecognizedNumberViewModel.CreateAdded();
+        var selectedIndex = SelectedItem is null ? -1 : Items.IndexOf(SelectedItem);
+        var insertAt = selectedIndex < 0 ? Items.Count : selectedIndex + 1;
+
+        row.PropertyChanged += OnItemPropertyChanged;
+        Items.Insert(insertAt, row);
+        SelectedItem = row;
+        Recalculate();
+    }
+
+    internal LabeledColumn ToLabel() => new()
+    {
+        Index = Index,
+        Rows = Items.Select(item => item.ToLabel()).ToArray()
+    };
+
     private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(RecognizedNumberViewModel.Text) or nameof(RecognizedNumberViewModel.IsIncluded))
@@ -61,6 +88,7 @@ public partial class ResultColumnViewModel : ObservableObject
             // parser applies is valid for manual edits too.
             var parsed = _parser.Parse(item.Text, isolatedToken: true);
             item.HasParseError = parsed.Count != 1;
+            item.ParsedValue = parsed.Count == 1 ? parsed[0].Value : null;
             if (item.IsIncluded && parsed.Count == 1)
             {
                 included.Add(parsed[0]);

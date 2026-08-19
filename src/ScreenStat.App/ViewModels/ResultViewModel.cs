@@ -16,6 +16,7 @@ public partial class ResultViewModel : ObservableObject
     private readonly NumberParser _numberParser = new();
     private readonly NumericRegionParser _regionParser = new();
     private readonly CoordinateColumnAnalyzer _columnAnalyzer = new();
+    private DatasetCaptureSession? _datasetSession;
     private bool _suppressNumbersRebuild;
     private bool _isLayoutResult;
     private string? _recognitionWarning;
@@ -29,6 +30,9 @@ public partial class ResultViewModel : ObservableObject
     [ObservableProperty] private string _numbersText = string.Empty;
     [ObservableProperty] private string _summaryText = string.Empty;
     [ObservableProperty] private string? _errorText;
+    [ObservableProperty] private bool _hasDatasetSession;
+    [ObservableProperty] private string _datasetNote = string.Empty;
+    [ObservableProperty] private string _datasetStatusText = string.Empty;
 
     public ResultViewModel(ClipboardService clipboardService)
     {
@@ -36,6 +40,25 @@ public partial class ResultViewModel : ObservableObject
     }
 
     public ObservableCollection<ResultColumnViewModel> Columns { get; } = new();
+
+    /// <summary>
+    /// Confirmation gate for discarding a capture, which deletes files. The
+    /// window replaces it with a real dialog; leaving it here keeps the view
+    /// model free of WPF dialogs.
+    /// </summary>
+    public Func<bool> ConfirmDiscard { get; set; } = () => true;
+
+    /// <summary>
+    /// Binds this result to the capture directory that was just created, so
+    /// recognition output and the user's corrections end up on disk together.
+    /// </summary>
+    public void AttachDatasetSession(DatasetCaptureSession session)
+    {
+        _datasetSession = session;
+        HasDatasetSession = true;
+        Title = "ScreenStat · 采集中";
+        DatasetStatusText = $"采集中 → {session.CaptureId}";
+    }
 
     public void ShowLoading()
     {
@@ -60,13 +83,16 @@ public partial class ResultViewModel : ObservableObject
         ApplyLegacyText(OcrText);
     }
 
-    public void ApplyLayoutSuccess(OcrDocument document)
+    public void ApplyLayoutSuccess(OcrDocument document) => ApplyLayoutSuccess(document, TimeSpan.Zero);
+
+    public void ApplyLayoutSuccess(OcrDocument document, TimeSpan ocrElapsed)
     {
         OcrText = document.FullText;
         _isLayoutResult = true;
         _recognitionWarning = document.WarningMessage;
 
         var numericColumns = _columnAnalyzer.Analyze(_regionParser.Parse(document));
+        RecordRecognition(document, numericColumns, ocrElapsed);
         if (numericColumns.Count == 0)
         {
             ClearColumns();
@@ -105,6 +131,79 @@ public partial class ResultViewModel : ObservableObject
         HasStatistics = false;
         StatusText = "识别失败";
         ErrorText = message;
+    }
+
+    /// <summary>
+    /// Failure path that still records the capture. A screenshot the engine
+    /// could not read at all is the most useful kind of sample to keep.
+    /// </summary>
+    public void ApplyLayoutFailure(OcrDocument document, TimeSpan ocrElapsed)
+    {
+        OcrText = document.FullText;
+        RecordRecognition(document, Array.Empty<NumericColumn>(), ocrElapsed);
+        ApplyFailure(document.ErrorMessage ?? "OCR 失败");
+    }
+
+    [RelayCommand]
+    private void SaveDatasetLabels()
+    {
+        if (_datasetSession is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _datasetSession.SaveLabels(DatasetNote, Columns.Select(column => column.ToLabel()).ToArray());
+            DatasetStatusText = $"已保存标注 → {_datasetSession.CaptureId}";
+        }
+        catch (Exception exception)
+        {
+            DatasetStatusText = $"保存标注失败：{exception.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void DiscardDatasetCapture()
+    {
+        if (_datasetSession is null || !ConfirmDiscard())
+        {
+            return;
+        }
+
+        try
+        {
+            _datasetSession.Discard();
+            DatasetStatusText = $"已删除样本 {_datasetSession.CaptureId}";
+            _datasetSession = null;
+            HasDatasetSession = false;
+            Title = "ScreenStat";
+        }
+        catch (Exception exception)
+        {
+            DatasetStatusText = $"删除样本失败：{exception.Message}";
+        }
+    }
+
+    private void RecordRecognition(
+        OcrDocument document,
+        IReadOnlyList<NumericColumn> columns,
+        TimeSpan ocrElapsed)
+    {
+        if (_datasetSession is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _datasetSession.SaveRecognition(document, columns, ocrElapsed);
+            DatasetStatusText = $"已记录识别结果 → {_datasetSession.CaptureId}";
+        }
+        catch (Exception exception)
+        {
+            DatasetStatusText = $"记录识别结果失败：{exception.Message}";
+        }
     }
 
     [RelayCommand]

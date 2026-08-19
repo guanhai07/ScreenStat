@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,6 +21,8 @@ public partial class App : WpfApplication
     private CaptureWorkflowService? _workflow;
     private ILayoutOcrService? _layoutOcrService;
     private ClipboardService? _clipboardService;
+    private AppSettingsService? _settings;
+    private CaptureDatasetRecorder? _datasetRecorder;
     private Window? _hiddenWindow;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -55,10 +58,12 @@ public partial class App : WpfApplication
             _hiddenWindow.Hide();
 
             _clipboardService = new ClipboardService();
+            _settings = new AppSettingsService();
+            _datasetRecorder = new CaptureDatasetRecorder(_settings);
             _layoutOcrService = new FallbackLayoutOcrService(
                 new RapidLayoutOcrService(),
                 new WindowsLayoutOcrService());
-            _workflow = new CaptureWorkflowService(_layoutOcrService, _clipboardService);
+            _workflow = new CaptureWorkflowService(_layoutOcrService, _clipboardService, _datasetRecorder);
 
             _hotkeyService = new HotkeyService();
             _hotkeyService.HotkeyPressed += (_, _) =>
@@ -129,6 +134,9 @@ public partial class App : WpfApplication
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("截图统计", null, (_, _) => Dispatcher.Invoke(() => _workflow?.Start()));
         menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add(CreateDatasetCaptureMenuItem());
+        menu.Items.Add("打开测试数据目录", null, (_, _) => OpenDatasetDirectory());
+        menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("关于", null, (_, _) =>
         {
             WpfMessageBox.Show(
@@ -147,6 +155,54 @@ public partial class App : WpfApplication
             ContextMenuStrip = menu
         };
         _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(() => _workflow?.Start());
+    }
+
+    /// <summary>
+    /// Turns everyday captures into labeled regression samples. Off by default;
+    /// the choice is remembered across runs.
+    /// </summary>
+    private Forms.ToolStripMenuItem CreateDatasetCaptureMenuItem()
+    {
+        var item = new Forms.ToolStripMenuItem("采集测试数据")
+        {
+            CheckOnClick = true,
+            Checked = _settings?.IsDatasetCaptureEnabled ?? false,
+            Enabled = !(_settings?.IsDatasetCaptureForced ?? false),
+            ToolTipText = _datasetRecorder is null ? null : $"保存到 {_datasetRecorder.Root}"
+        };
+
+        item.CheckedChanged += (_, _) =>
+        {
+            if (_settings is not null)
+            {
+                _settings.IsDatasetCaptureEnabled = item.Checked;
+            }
+        };
+
+        return item;
+    }
+
+    private void OpenDatasetDirectory()
+    {
+        if (_datasetRecorder is null)
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(_datasetRecorder.Root);
+            Process.Start(new ProcessStartInfo(_datasetRecorder.Root) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Log("Open dataset directory failed: " + ex);
+            WpfMessageBox.Show(
+                $"无法打开测试数据目录：\n{_datasetRecorder.Root}\n\n{ex.Message}",
+                "ScreenStat",
+                WpfMessageBoxButton.OK,
+                WpfMessageBoxImage.Warning);
+        }
     }
 
     private static Icon CreateTrayIconImage()

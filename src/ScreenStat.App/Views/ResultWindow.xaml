@@ -1,7 +1,7 @@
 <Window x:Class="ScreenStat.App.Views.ResultWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ScreenStat"
+        Title="{Binding Title}"
         Width="720"
         Height="640"
         MinWidth="560"
@@ -51,6 +51,7 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
@@ -103,11 +104,21 @@
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding StatusText}" Foreground="#FFBDBDBD" />
+                <TextBlock Text="{Binding StatusText}" Foreground="#FFBDBDBD" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="1"
                            Text="{Binding LowConfidenceCount, StringFormat=低置信度 {0} 项}"
-                           Foreground="#FFFFB74D" />
+                           Foreground="#FFFFB74D"
+                           VerticalAlignment="Center" />
+                <!-- Only meaningful while collecting: lets the reviewer restore
+                     a row OCR dropped, at the position where it belongs. -->
+                <Button Grid.Column="2"
+                        Content="在选中行后插入"
+                        Margin="12,0,0,0"
+                        MinWidth="120"
+                        Command="{Binding InsertRowCommand}"
+                        Visibility="{Binding DataContext.HasDatasetSession, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}" />
               </Grid>
 
               <TextBox Grid.Row="1"
@@ -124,6 +135,7 @@
 
               <DataGrid Grid.Row="2"
                         ItemsSource="{Binding Items}"
+                        SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                         AutoGenerateColumns="False"
                         CanUserAddRows="False"
                         CanUserDeleteRows="False"
@@ -141,6 +153,13 @@
                                       Binding="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                       Width="*" />
                   <DataGridTextColumn Header="置信度" Binding="{Binding ConfidenceText}" IsReadOnly="True" Width="75" />
+                  <DataGridTextColumn Header="来源" Binding="{Binding OriginText}" IsReadOnly="True" Width="70">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="#FF80CBC4" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
                   <DataGridTextColumn Header="状态" Binding="{Binding ReviewText}" IsReadOnly="True" Width="90">
                     <DataGridTextColumn.ElementStyle>
                       <Style TargetType="TextBlock">
@@ -180,7 +199,50 @@
                MaxHeight="180" />
     </Expander>
 
-    <Grid Grid.Row="4">
+    <!-- Shown only while this capture is being collected as a dataset sample. -->
+    <Border Grid.Row="4"
+            Margin="0,0,0,12"
+            Padding="10"
+            Background="#FF262626"
+            BorderBrush="#FF3F51B5"
+            BorderThickness="1"
+            Visibility="{Binding HasDatasetSession, Converter={StaticResource BoolToVis}}">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Text="场景备注" VerticalAlignment="Center" Margin="0,0,8,0" />
+        <TextBox Grid.Column="1"
+                 Text="{Binding DatasetNote, UpdateSourceTrigger=PropertyChanged}"
+                 VerticalContentAlignment="Center"
+                 Padding="6,3"
+                 Background="#FF2B2B2B"
+                 Foreground="#FFF3F3F3"
+                 CaretBrush="#FFF3F3F3"
+                 BorderBrush="#FF484848"
+                 ToolTip="例如：深色主题 / 125% DPI / 12px / 某某报表" />
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,0">
+          <Button Content="保存标注" Margin="0,0,8,0" Command="{Binding SaveDatasetLabelsCommand}" />
+          <Button Content="作废样本" Command="{Binding DiscardDatasetCaptureCommand}" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="1"
+                   Grid.ColumnSpan="3"
+                   Margin="0,8,0,0"
+                   Text="{Binding DatasetStatusText}"
+                   Foreground="#FF9CCC65"
+                   TextWrapping="Wrap" />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="5">
       <TextBlock VerticalAlignment="Center"
                  Opacity="0.6"
                  Text="本地处理 · 不上传截图 · 取消勾选即可排除错误项" />
