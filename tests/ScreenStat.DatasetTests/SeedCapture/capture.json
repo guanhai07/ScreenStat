@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "captureId": "seed-dark-theme",
+  "capturedAt": "2026-08-12T16:11:23+08:00",
+  "image": {
+    "file": "capture.png",
+    "width": 46,
+    "height": 126,
+    "aspectRatio": 0.3651
+  },
+  "ocr": {
+    "engine": "PP-OCRv5-ONNX",
+    "success": true,
+    "elapsedMs": 972,
+    "regions": [
+      {
+        "sourceOrder": 0,
+        "text": "123",
+        "confidence": 1,
+        "left": 12,
+        "top": 0,
+        "width": 23,
+        "height": 17
+      },
+      {
+        "sourceOrder": 1,
+        "text": "156",
+        "confidence": 1,
+        "left": 12,
+        "top": 18,
+        "width": 23,
+        "height": 20
+      },
+      {
+        "sourceOrder": 2,
+        "text": "98",
+        "confidence": 1,
+        "left": 11,
+        "top": 38,
+        "width": 17,
+        "height": 18
+      },
+      {
+        "sourceOrder": 3,
+        "text": "231",
+        "confidence": 1,
+        "left": 13,
+        "top": 56,
+        "width": 21,
+        "height": 20
+      },
+      {
+        "sourceOrder": 4,
+        "text": "145",
+        "confidence": 1,
+        "left": 12,
+        "top": 75,
+        "width": 23,
+        "height": 20
+      },
+      {
+        "sourceOrder": 5,
+        "text": "aèEE",
+        "confidence": 0.4038,
+        "left": 11,
+        "top": 110,
+        "width": 35,
+        "height": 16
+      }
+    ]
+  },
+  "columns": [
+    {
+      "index": 1,
+      "tokens": [
+        {
+          "sourceOrder": 0,
+          "text": "123",
+          "value": 123,
+          "confidence": 1,
+          "isCorrected": false,
+          "left": 12,
+          "top": 0,
+          "width": 23,
+          "height": 17
+        },
+        {
+          "sourceOrder": 1,
+          "text": "156",
+          "value": 156,
+          "confidence": 1,
+          "isCorrected": false,
+          "left": 12,
+          "top": 18,
+          "width": 23,
+          "height": 20
+        },
+        {
+          "sourceOrder": 2,
+          "text": "98",
+          "value": 98,
+          "confidence": 1,
+          "isCorrected": false,
+          "left": 11,
+          "top": 38,
+          "width": 17,
+          "height": 18
+        },
+        {
+          "sourceOrder": 3,
+          "text": "231",
+          "value": 231,
+          "confidence": 1,
+          "isCorrected": false,
+          "left": 13,
+          "top": 56,
+          "width": 21,
+          "height": 20
+        },
+        {
+          "sourceOrder": 4,
+          "text": "145",
+          "value": 145,
+          "confidence": 1,
+          "isCorrected": false,
+          "left": 12,
+          "top": 75,
+          "width": 23,
+          "height": 20
+        }
+      ]
+    }
+  ]
+}
