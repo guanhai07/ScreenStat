@@ -1,3 +1,4 @@
+using ScreenStat.App.Resources;
 using ScreenStat.Core.Abstractions;
 using ScreenStat.Core.Models;
 
@@ -46,19 +47,22 @@ public sealed class FallbackLayoutOcrService : ILayoutOcrService, IDisposable
             cancellationToken).ConfigureAwait(false);
         if (fallbackResult.Success && fallbackResult.Regions.Count > 0)
         {
-            var primaryError = primaryResult.ErrorMessage ?? "未检测到文字区域";
+            var primaryError = primaryResult.ErrorMessage ?? Strings.OcrNoTextRegions;
             return new OcrDocument
             {
                 Success = true,
                 Engine = fallbackResult.Engine,
                 Regions = fallbackResult.Regions,
-                WarningMessage = $"本地 ONNX OCR 未完成识别，已自动改用 Windows OCR。原因：{primaryError}"
+                WarningMessage = string.Format(Strings.OcrFallbackWarning, primaryError)
             };
         }
 
         return OcrDocument.Failed(
             $"{primaryResult.Engine} + {fallbackResult.Engine}",
-            $"两种本地识别均失败。ONNX：{primaryResult.ErrorMessage ?? "未知错误"}；Windows OCR：{fallbackResult.ErrorMessage ?? "未知错误"}");
+            string.Format(
+                Strings.OcrBothEnginesFailed,
+                primaryResult.ErrorMessage ?? Strings.OcrUnknownError,
+                fallbackResult.ErrorMessage ?? Strings.OcrUnknownError));
     }
 
     public void Dispose()

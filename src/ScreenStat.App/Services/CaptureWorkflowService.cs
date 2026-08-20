@@ -2,6 +2,7 @@
 using System.IO;
 using System.Windows;
 using ScreenStat.App.Infrastructure;
+using ScreenStat.App.Resources;
 using ScreenStat.App.ViewModels;
 using ScreenStat.App.Views;
 using ScreenStat.Core.Abstractions;
@@ -82,7 +83,11 @@ internal sealed class CaptureWorkflowService
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"截图统计失败：{ex.Message}", "ScreenStat", MessageBoxButton.OK, MessageBoxImage.Error);
+            System.Windows.MessageBox.Show(
+                string.Format(Strings.CaptureFailed, ex.Message),
+                Strings.AppName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
         finally
         {

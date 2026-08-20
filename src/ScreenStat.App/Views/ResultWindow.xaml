@@ -1,6 +1,7 @@
 <Window x:Class="ScreenStat.App.Views.ResultWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:ScreenStat.App.Resources"
         Style="{StaticResource AppWindowStyle}"
         Title="{Binding Title}"
         Width="820"
@@ -70,7 +71,7 @@
             </EventTrigger>
           </Path.Triggers>
         </Path>
-        <TextBlock Text="正在加载本地识别模型并分析..."
+        <TextBlock Text="{x:Static res:Strings.ResultLoading}"
                    Style="{StaticResource BodyTextStyle}"
                    HorizontalAlignment="Center"
                    Margin="0,16,0,0" />
@@ -104,10 +105,17 @@
                            Style="{StaticResource CaptionTextStyle}"
                            VerticalAlignment="Center" />
                 <TextBlock Grid.Column="1"
-                           Text="{Binding LowConfidenceCount, StringFormat=低置信度 {0} 项}"
                            Style="{StaticResource CaptionTextStyle}"
                            Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                           VerticalAlignment="Center" />
+                           VerticalAlignment="Center">
+                  <TextBlock.Text>
+                    <Binding Path="LowConfidenceCount">
+                      <Binding.StringFormat>
+                        <x:Static Member="res:Strings.ResultLowConfidenceFormat" />
+                      </Binding.StringFormat>
+                    </Binding>
+                  </TextBlock.Text>
+                </TextBlock>
                 <!-- Only meaningful while collecting: restores a row OCR dropped,
                      at the position where it belongs. -->
                 <Button Grid.Column="2"
@@ -164,7 +172,7 @@
                           AutoGenerateColumns="False"
                           Margin="8,4,8,8">
                   <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Header="使用"
+                    <DataGridCheckBoxColumn Header="{x:Static res:Strings.GridUse}"
                                             Binding="{Binding IsIncluded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             Width="60">
                       <DataGridCheckBoxColumn.ElementStyle>
@@ -181,7 +189,7 @@
                       </DataGridCheckBoxColumn.EditingElementStyle>
                     </DataGridCheckBoxColumn>
                     <!-- Tabular figures here, so a column of numbers lines up. -->
-                    <DataGridTextColumn Header="识别数字（可直接修改）"
+                    <DataGridTextColumn Header="{x:Static res:Strings.GridValue}"
                                         Binding="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                         ElementStyle="{StaticResource TabularCellTextStyle}"
                                         Width="*">
@@ -196,7 +204,7 @@
                         </Style>
                       </DataGridTextColumn.EditingElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="置信度"
+                    <DataGridTextColumn Header="{x:Static res:Strings.GridConfidence}"
                                         Binding="{Binding ConfidenceText}"
                                         IsReadOnly="True"
                                         Width="84">
@@ -206,7 +214,7 @@
                         </Style>
                       </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="来源" Binding="{Binding OriginText}" IsReadOnly="True" Width="76">
+                    <DataGridTextColumn Header="{x:Static res:Strings.GridOrigin}" Binding="{Binding OriginText}" IsReadOnly="True" Width="76">
                       <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                           <Setter Property="VerticalAlignment" Value="Center" />
@@ -214,7 +222,7 @@
                         </Style>
                       </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="状态" Binding="{Binding ReviewText}" IsReadOnly="True" Width="88">
+                    <DataGridTextColumn Header="{x:Static res:Strings.GridStatus}" Binding="{Binding ReviewText}" IsReadOnly="True" Width="88">
                       <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                           <Setter Property="VerticalAlignment" Value="Center" />
@@ -241,7 +249,9 @@
       </TabControl>
     </Grid>
 
-    <!-- Shown only while this capture is being collected as a dataset sample. -->
+    <!-- Shown only while this capture is being collected as a dataset sample,
+         which only happens in development builds — hence the untranslated
+         strings here and on the insert-row button above. -->
     <Border Grid.Row="3"
             Style="{StaticResource CardBorderStyle}"
             Padding="14"
@@ -282,11 +292,11 @@
     <Grid Grid.Row="4" Margin="0,18,0,0">
       <TextBlock VerticalAlignment="Center"
                  Style="{StaticResource CaptionTextStyle}"
-                 Text="本地处理 · 不上传截图 · 取消勾选即可排除错误项" />
+                 Text="{x:Static res:Strings.ResultFooter}" />
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-        <Button Content="复制统计" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,0" Command="{Binding CopyStatisticsCommand}" />
-        <Button Content="复制数字" Margin="0,0,8,0" Command="{Binding CopyNumbersCommand}" />
-        <Button Content="OCR 原文" Click="OnShowOcrTextClick" />
+        <Button Content="{x:Static res:Strings.ResultCopyStatistics}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,0" Command="{Binding CopyStatisticsCommand}" />
+        <Button Content="{x:Static res:Strings.ResultCopyNumbers}" Margin="0,0,8,0" Command="{Binding CopyNumbersCommand}" />
+        <Button Content="{x:Static res:Strings.OcrTextTitle}" Click="OnShowOcrTextClick" />
       </StackPanel>
     </Grid>
   </Grid>

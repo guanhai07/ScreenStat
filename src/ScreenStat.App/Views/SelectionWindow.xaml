@@ -1,6 +1,7 @@
 <Window x:Class="ScreenStat.App.Views.SelectionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:ScreenStat.App.Resources"
         Title="ScreenStat Selection"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -42,7 +43,7 @@
         <TextBlock Foreground="{DynamicResource OverlayPillTextBrush}"
                    FontFamily="Segoe UI Variable Text, Segoe UI"
                    FontSize="14"
-                   Text="拖动鼠标选择区域 · ESC 取消" />
+                   Text="{x:Static res:Strings.SelectionHint}" />
       </Border>
     </Canvas>
   </Grid>

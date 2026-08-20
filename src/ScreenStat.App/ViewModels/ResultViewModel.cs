@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ScreenStat.App.Resources;
 using ScreenStat.App.Services;
 using ScreenStat.Core.Analysis;
 using ScreenStat.Core.Models;
@@ -22,7 +23,7 @@ public partial class ResultViewModel : ObservableObject
     private string? _recognitionWarning;
 
     [ObservableProperty] private string _title = "ScreenStat";
-    [ObservableProperty] private string _statusText = "正在识别...";
+    [ObservableProperty] private string _statusText = Strings.ResultRecognizing;
     [ObservableProperty] private bool _isBusy = true;
     [ObservableProperty] private bool _hasStatistics;
     [ObservableProperty] private bool _hasColumns;
@@ -75,7 +76,7 @@ public partial class ResultViewModel : ObservableObject
         IsBusy = true;
         HasStatistics = false;
         HasColumns = false;
-        StatusText = "正在识别...";
+        StatusText = Strings.ResultRecognizing;
         ErrorText = null;
         SummaryText = string.Empty;
         SetNumbersText(string.Empty);
@@ -106,10 +107,10 @@ public partial class ResultViewModel : ObservableObject
             IsBusy = false;
             HasColumns = false;
             HasStatistics = false;
-            StatusText = "未识别到数字";
+            StatusText = Strings.ResultNoNumbers;
             ErrorText = string.IsNullOrWhiteSpace(OcrText)
-                ? "OCR 未返回文本。"
-                : "OCR 返回了文字，但没有可统计的数字。可展开查看 OCR 原文。";
+                ? Strings.ResultOcrReturnedNoText
+                : Strings.ResultOcrNoCountableNumbers;
             SummaryText = string.Empty;
             SetNumbersText(string.Empty);
             return;
@@ -136,7 +137,7 @@ public partial class ResultViewModel : ObservableObject
         IsBusy = false;
         HasColumns = false;
         HasStatistics = false;
-        StatusText = "识别失败";
+        StatusText = Strings.ResultRecognitionFailed;
         ErrorText = message;
     }
 
@@ -148,7 +149,7 @@ public partial class ResultViewModel : ObservableObject
     {
         OcrText = document.FullText;
         RecordRecognition(document, Array.Empty<NumericColumn>(), ocrElapsed);
-        ApplyFailure(document.ErrorMessage ?? "OCR 失败");
+        ApplyFailure(document.ErrorMessage ?? Strings.ResultRecognitionFailed);
     }
 
     [RelayCommand]
@@ -251,8 +252,8 @@ public partial class ResultViewModel : ObservableObject
             HasColumns = false;
             HasStatistics = false;
             SummaryText = string.Empty;
-            StatusText = "未识别到数字";
-            ErrorText = "请每行输入一个数字，例如：12.5 或 123ms。";
+            StatusText = Strings.ResultNoNumbers;
+            ErrorText = Strings.ResultManualEntryHint;
             SetNumbersText(text ?? string.Empty);
             return;
         }
@@ -314,15 +315,15 @@ public partial class ResultViewModel : ObservableObject
 
         if (_isLayoutResult)
         {
-            StatusText = $"已识别 {Columns.Count} 列，共 {includedCount} 个数字";
+            StatusText = string.Format(Strings.ResultStatusColumns, Columns.Count, includedCount);
             if (lowConfidenceCount > 0)
             {
-                StatusText += $"，{lowConfidenceCount} 项请复核";
+                StatusText += string.Format(Strings.ResultStatusReviewSuffix, lowConfidenceCount);
             }
         }
         else
         {
-            StatusText = $"已识别 {includedCount} 个数字";
+            StatusText = string.Format(Strings.ResultStatusNumbers, includedCount);
         }
 
         ErrorText = _recognitionWarning;

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using RapidOcrNet;
+using ScreenStat.App.Resources;
 using ScreenStat.Core.Abstractions;
 using ScreenStat.Core.Models;
 using SkiaSharp;
@@ -84,7 +85,7 @@ public sealed class RapidLayoutOcrService : ILayoutOcrService, IDisposable
                 Success = regions.Count > 0,
                 Engine = EngineName,
                 Regions = regions,
-                ErrorMessage = regions.Count == 0 ? "未检测到文字区域。" : null
+                ErrorMessage = regions.Count == 0 ? Strings.OcrNoTextRegions : null
             };
         }
         catch (OperationCanceledException)
@@ -93,7 +94,7 @@ public sealed class RapidLayoutOcrService : ILayoutOcrService, IDisposable
         }
         catch (Exception exception)
         {
-            return OcrDocument.Failed(EngineName, $"本地 ONNX 识别失败：{exception.Message}");
+            return OcrDocument.Failed(EngineName, string.Format(Strings.OcrOnnxFailed, exception.Message));
         }
         finally
         {
@@ -250,7 +251,7 @@ public sealed class RapidLayoutOcrService : ILayoutOcrService, IDisposable
         if (pixels.Length != requiredLength)
         {
             throw new ArgumentException(
-                $"BGRA 像素长度应为 {requiredLength}，实际为 {pixels.Length}。",
+                $"Expected {requiredLength} BGRA bytes but got {pixels.Length}.",
                 nameof(pixels));
         }
     }

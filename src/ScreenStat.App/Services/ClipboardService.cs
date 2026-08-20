@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using ScreenStat.App.Resources;
 
 namespace ScreenStat.App.Services;
 
@@ -26,7 +27,7 @@ public sealed class ClipboardService
             }
         }
 
-        throw new InvalidOperationException("无法写入剪贴板。", last);
+        throw new InvalidOperationException(Strings.ClipboardFailed, last);
     }
 }
 

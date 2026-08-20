@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Simplified Chinese. Key set must match Strings.resx exactly; a missing key
+    falls back to English without any warning, so LocalizationTests checks parity.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="AppName" xml:space="preserve">
+    <value>ScreenStat</value>
+  </data>
+
+  <data name="TrayCapture" xml:space="preserve">
+    <value>截图统计</value>
+  </data>
+  <data name="TraySettings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="TrayAbout" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="TrayTooltip" xml:space="preserve">
+    <value>ScreenStat - {0}</value>
+  </data>
+  <data name="TrayTooltipHotkeyUnavailable" xml:space="preserve">
+    <value>ScreenStat - 热键未生效，请用右键菜单</value>
+  </data>
+  <data name="AboutBody" xml:space="preserve">
+    <value>ScreenStat
+屏幕框选 → OCR → 数字统计
+本地处理，不上传数据。
+快捷键：{0}</value>
+  </data>
+
+  <data name="StartupHotkeyFailed" xml:space="preserve">
+    <value>全局快捷键 {0} 注册失败，多半是被别的程序占用了。
+
+程序仍可使用：右键托盘图标选「截图统计」，或到「设置」里换一个组合键。</value>
+  </data>
+  <data name="StartupFailed" xml:space="preserve">
+    <value>ScreenStat 启动失败：
+{0}
+
+详情已写入 %TEMP%\ScreenStat-startup.log</value>
+  </data>
+
+  <data name="SelectionHint" xml:space="preserve">
+    <value>拖动鼠标选择区域 · ESC 取消</value>
+  </data>
+
+  <data name="ResultRecognizing" xml:space="preserve">
+    <value>正在识别...</value>
+  </data>
+  <data name="ResultLoading" xml:space="preserve">
+    <value>正在加载本地识别模型并分析...</value>
+  </data>
+  <data name="ResultNoNumbers" xml:space="preserve">
+    <value>未识别到数字</value>
+  </data>
+  <data name="ResultOcrReturnedNoText" xml:space="preserve">
+    <value>OCR 未返回文本。</value>
+  </data>
+  <data name="ResultOcrNoCountableNumbers" xml:space="preserve">
+    <value>OCR 返回了文字，但没有可统计的数字。点「OCR 原文」可以看到它读到了什么。</value>
+  </data>
+  <data name="ResultRecognitionFailed" xml:space="preserve">
+    <value>识别失败</value>
+  </data>
+  <data name="ResultManualEntryHint" xml:space="preserve">
+    <value>请每行输入一个数字，例如：12.5 或 123ms。</value>
+  </data>
+  <data name="ResultStatusColumns" xml:space="preserve">
+    <value>已识别 {0} 列，共 {1} 个数字</value>
+  </data>
+  <data name="ResultStatusReviewSuffix" xml:space="preserve">
+    <value>，{0} 项请复核</value>
+  </data>
+  <data name="ResultStatusNumbers" xml:space="preserve">
+    <value>已识别 {0} 个数字</value>
+  </data>
+  <data name="ResultLowConfidenceFormat" xml:space="preserve">
+    <value>低置信度 {0} 项</value>
+  </data>
+  <data name="ResultFooter" xml:space="preserve">
+    <value>本地处理 · 不上传截图 · 取消勾选即可排除错误项</value>
+  </data>
+  <data name="ResultCopyStatistics" xml:space="preserve">
+    <value>复制统计</value>
+  </data>
+  <data name="ResultCopyNumbers" xml:space="preserve">
+    <value>复制数字</value>
+  </data>
+
+  <data name="ColumnHeader" xml:space="preserve">
+    <value>第 {0} 列</value>
+  </data>
+  <data name="ColumnNoValidNumbers" xml:space="preserve">
+    <value>本列没有启用的有效数字</value>
+  </data>
+  <data name="ColumnUsing" xml:space="preserve">
+    <value>使用 {0} 个数字</value>
+  </data>
+  <data name="ColumnUsingWithInvalid" xml:space="preserve">
+    <value>使用 {0} 个数字，{1} 项格式无效</value>
+  </data>
+  <data name="GridUse" xml:space="preserve">
+    <value>使用</value>
+  </data>
+  <data name="GridValue" xml:space="preserve">
+    <value>识别数字（可直接修改）</value>
+  </data>
+  <data name="GridConfidence" xml:space="preserve">
+    <value>置信度</value>
+  </data>
+  <data name="GridOrigin" xml:space="preserve">
+    <value>来源</value>
+  </data>
+  <data name="GridStatus" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="RowAdded" xml:space="preserve">
+    <value>新增</value>
+  </data>
+  <data name="RowExcluded" xml:space="preserve">
+    <value>已排除</value>
+  </data>
+  <data name="RowEdited" xml:space="preserve">
+    <value>已修改</value>
+  </data>
+  <data name="RowMalformed" xml:space="preserve">
+    <value>格式无效</value>
+  </data>
+  <data name="RowReview" xml:space="preserve">
+    <value>请复核</value>
+  </data>
+
+  <data name="OcrTextTitle" xml:space="preserve">
+    <value>OCR 原文</value>
+  </data>
+  <data name="OcrTextHint" xml:space="preserve">
+    <value>识别引擎返回的原始文本，未经分列或数字解析。</value>
+  </data>
+
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="SettingsHotkey" xml:space="preserve">
+    <value>快捷键</value>
+  </data>
+  <data name="SettingsHotkeyHint" xml:space="preserve">
+    <value>点击输入框，然后按下想用的组合键。必须包含 Ctrl、Alt 或 Shift。</value>
+  </data>
+  <data name="SettingsHotkeyPressPrompt" xml:space="preserve">
+    <value>请按下组合键...</value>
+  </data>
+  <data name="SettingsHotkeyNeedsModifier" xml:space="preserve">
+    <value>组合键必须包含 Ctrl、Alt 或 Shift。</value>
+  </data>
+  <data name="SettingsHotkeyTaken" xml:space="preserve">
+    <value>{0} 已被别的程序占用，仍在使用原来的快捷键。</value>
+  </data>
+  <data name="SettingsHotkeyApplied" xml:space="preserve">
+    <value>快捷键已改为 {0}。</value>
+  </data>
+  <data name="SettingsHotkeyInactive" xml:space="preserve">
+    <value>当前快捷键未注册成功，请换一个组合键。</value>
+  </data>
+  <data name="SettingsLanguage" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="SettingsLanguageSystem" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="SettingsLanguageNote" xml:space="preserve">
+    <value>对之后打开的窗口生效。</value>
+  </data>
+
+  <data name="CommonCopy" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="CommonClose" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="CommonSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="CommonCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+
+  <data name="CaptureFailed" xml:space="preserve">
+    <value>截图统计失败：{0}</value>
+  </data>
+  <data name="ClipboardFailed" xml:space="preserve">
+    <value>无法写入剪贴板。</value>
+  </data>
+  <data name="OcrEmptyImage" xml:space="preserve">
+    <value>截图为空，无法进行 OCR。</value>
+  </data>
+  <data name="OcrWindowsEngineUnavailable" xml:space="preserve">
+    <value>无法创建 Windows OCR 引擎。请在「设置 → 时间和语言 → 语言和区域」中安装英文或中文的「光学字符识别」语言包。</value>
+  </data>
+  <data name="OcrNoText" xml:space="preserve">
+    <value>OCR 未返回文本。</value>
+  </data>
+  <data name="OcrFailedWithReason" xml:space="preserve">
+    <value>OCR 识别失败：{0}</value>
+  </data>
+  <data name="OcrNoTextRegions" xml:space="preserve">
+    <value>未检测到文字区域。</value>
+  </data>
+  <data name="OcrOnnxFailed" xml:space="preserve">
+    <value>本地 ONNX 识别失败：{0}</value>
+  </data>
+  <data name="OcrFallbackWarning" xml:space="preserve">
+    <value>本地 ONNX OCR 未完成识别，已自动改用 Windows OCR。原因：{0}</value>
+  </data>
+  <data name="OcrBothEnginesFailed" xml:space="preserve">
+    <value>两种本地识别均失败。ONNX：{0}；Windows OCR：{1}。</value>
+  </data>
+  <data name="OcrUnknownError" xml:space="preserve">
+    <value>未知错误</value>
+  </data>
+  <data name="OcrWindowsFailed" xml:space="preserve">
+    <value>Windows OCR 识别失败。</value>
+  </data>
+  <data name="OcrWindowsNoText" xml:space="preserve">
+    <value>Windows OCR 未返回文字。</value>
+  </data>
+</root>

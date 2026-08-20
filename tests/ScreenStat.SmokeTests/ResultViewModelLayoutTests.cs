@@ -1,3 +1,4 @@
+using System.Globalization;
 using ScreenStat.App.Services;
 using ScreenStat.App.ViewModels;
 using ScreenStat.Core.Models;
@@ -6,6 +7,11 @@ namespace ScreenStat.SmokeTests;
 
 public sealed class ResultViewModelLayoutTests
 {
+    public ResultViewModelLayoutTests() =>
+        // These assertions spell out the Chinese strings, so pin the culture
+        // instead of inheriting whatever the machine running the tests uses.
+        CultureInfo.CurrentUICulture = new CultureInfo(LocalizationService.SimplifiedChineseCulture);
+
     [Fact]
     public void LayoutResult_SeparatesColumnsAndCalculatesEachColumn()
     {

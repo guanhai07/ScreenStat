@@ -1,3 +1,4 @@
+using System.Globalization;
 using ScreenStat.App.Services;
 using ScreenStat.App.ViewModels;
 using ScreenStat.Core.Models;
@@ -6,6 +7,11 @@ namespace ScreenStat.SmokeTests;
 
 public class ResultViewModelManualCorrectionTests
 {
+    public ResultViewModelManualCorrectionTests() =>
+        // Asserts Chinese status text; pin the culture so the result does not
+        // depend on the machine's language.
+        CultureInfo.CurrentUICulture = new CultureInfo(LocalizationService.SimplifiedChineseCulture);
+
     [Fact]
     public void EditingNumbers_RecalculatesStatistics()
     {

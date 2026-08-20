@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Neutral (English) strings. Every key here must also exist in
+    Strings.zh-Hans.resx — LocalizationTests asserts that, because a missing
+    translation silently falls back to English and is easy to miss.
+
+    Dataset collection strings are deliberately absent: that UI only exists in
+    development builds, so translating it would be waste.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="AppName" xml:space="preserve">
+    <value>ScreenStat</value>
+  </data>
+
+  <!-- Tray -->
+  <data name="TrayCapture" xml:space="preserve">
+    <value>Capture and count</value>
+  </data>
+  <data name="TraySettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="TrayAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="TrayTooltip" xml:space="preserve">
+    <value>ScreenStat - {0}</value>
+    <comment>{0} is the current hotkey, for example Ctrl+Shift+X</comment>
+  </data>
+  <data name="TrayTooltipHotkeyUnavailable" xml:space="preserve">
+    <value>ScreenStat - hotkey unavailable, use this menu</value>
+  </data>
+  <data name="AboutBody" xml:space="preserve">
+    <value>ScreenStat
+Select an area on screen, recognize it, count the numbers.
+Everything runs locally; nothing is uploaded.
+Hotkey: {0}</value>
+    <comment>{0} is the current hotkey</comment>
+  </data>
+
+  <!-- Startup -->
+  <data name="StartupHotkeyFailed" xml:space="preserve">
+    <value>The global hotkey {0} could not be registered — another program is probably using it.
+
+ScreenStat still works: use Capture and count in the tray menu, or pick a different hotkey in Settings.</value>
+  </data>
+  <data name="StartupFailed" xml:space="preserve">
+    <value>ScreenStat failed to start:
+{0}
+
+Details were written to %TEMP%\ScreenStat-startup.log</value>
+  </data>
+
+  <!-- Selection overlay -->
+  <data name="SelectionHint" xml:space="preserve">
+    <value>Drag to select an area · ESC to cancel</value>
+  </data>
+
+  <!-- Result window -->
+  <data name="ResultRecognizing" xml:space="preserve">
+    <value>Recognizing...</value>
+  </data>
+  <data name="ResultLoading" xml:space="preserve">
+    <value>Loading the local recognition model...</value>
+  </data>
+  <data name="ResultNoNumbers" xml:space="preserve">
+    <value>No numbers found</value>
+  </data>
+  <data name="ResultOcrReturnedNoText" xml:space="preserve">
+    <value>OCR returned no text.</value>
+  </data>
+  <data name="ResultOcrNoCountableNumbers" xml:space="preserve">
+    <value>OCR returned text, but nothing countable. Open OCR text to see what it read.</value>
+  </data>
+  <data name="ResultRecognitionFailed" xml:space="preserve">
+    <value>Recognition failed</value>
+  </data>
+  <data name="ResultManualEntryHint" xml:space="preserve">
+    <value>Enter one number per line, for example 12.5 or 123ms.</value>
+  </data>
+  <data name="ResultStatusColumns" xml:space="preserve">
+    <value>{0} columns, {1} numbers</value>
+  </data>
+  <data name="ResultStatusReviewSuffix" xml:space="preserve">
+    <value>, {0} to review</value>
+  </data>
+  <data name="ResultStatusNumbers" xml:space="preserve">
+    <value>{0} numbers</value>
+  </data>
+  <data name="ResultLowConfidenceFormat" xml:space="preserve">
+    <value>{0} low confidence</value>
+  </data>
+  <data name="ResultFooter" xml:space="preserve">
+    <value>Local only · nothing uploaded · uncheck a row to exclude it</value>
+  </data>
+  <data name="ResultCopyStatistics" xml:space="preserve">
+    <value>Copy stats</value>
+  </data>
+  <data name="ResultCopyNumbers" xml:space="preserve">
+    <value>Copy numbers</value>
+  </data>
+
+  <!-- Columns and rows -->
+  <data name="ColumnHeader" xml:space="preserve">
+    <value>Column {0}</value>
+  </data>
+  <data name="ColumnNoValidNumbers" xml:space="preserve">
+    <value>No enabled numbers in this column</value>
+  </data>
+  <data name="ColumnUsing" xml:space="preserve">
+    <value>Using {0} numbers</value>
+  </data>
+  <data name="ColumnUsingWithInvalid" xml:space="preserve">
+    <value>Using {0} numbers, {1} malformed</value>
+  </data>
+  <data name="GridUse" xml:space="preserve">
+    <value>Use</value>
+  </data>
+  <data name="GridValue" xml:space="preserve">
+    <value>Recognized number (editable)</value>
+  </data>
+  <data name="GridConfidence" xml:space="preserve">
+    <value>Confidence</value>
+  </data>
+  <data name="GridOrigin" xml:space="preserve">
+    <value>Origin</value>
+  </data>
+  <data name="GridStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="RowAdded" xml:space="preserve">
+    <value>Added</value>
+  </data>
+  <data name="RowExcluded" xml:space="preserve">
+    <value>Excluded</value>
+  </data>
+  <data name="RowEdited" xml:space="preserve">
+    <value>Edited</value>
+  </data>
+  <data name="RowMalformed" xml:space="preserve">
+    <value>Malformed</value>
+  </data>
+  <data name="RowReview" xml:space="preserve">
+    <value>Review</value>
+  </data>
+
+  <!-- OCR text window -->
+  <data name="OcrTextTitle" xml:space="preserve">
+    <value>OCR text</value>
+  </data>
+  <data name="OcrTextHint" xml:space="preserve">
+    <value>Raw output from the recognition engine, before column splitting or number parsing.</value>
+  </data>
+
+  <!-- Settings window -->
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SettingsHotkey" xml:space="preserve">
+    <value>Hotkey</value>
+  </data>
+  <data name="SettingsHotkeyHint" xml:space="preserve">
+    <value>Click the box, then press the combination you want. It must include Ctrl, Alt or Shift.</value>
+  </data>
+  <data name="SettingsHotkeyPressPrompt" xml:space="preserve">
+    <value>Press a combination...</value>
+  </data>
+  <data name="SettingsHotkeyNeedsModifier" xml:space="preserve">
+    <value>The combination must include Ctrl, Alt or Shift.</value>
+  </data>
+  <data name="SettingsHotkeyTaken" xml:space="preserve">
+    <value>{0} is already in use by another program. The previous hotkey is still active.</value>
+  </data>
+  <data name="SettingsHotkeyApplied" xml:space="preserve">
+    <value>Hotkey is now {0}.</value>
+  </data>
+  <data name="SettingsHotkeyInactive" xml:space="preserve">
+    <value>The current hotkey is not registered. Pick another combination.</value>
+  </data>
+  <data name="SettingsLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingsLanguageSystem" xml:space="preserve">
+    <value>Follow system</value>
+  </data>
+  <data name="SettingsLanguageNote" xml:space="preserve">
+    <value>Applies to windows opened from now on.</value>
+  </data>
+
+  <!-- Shared -->
+  <data name="CommonCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="CommonClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="CommonSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="CommonCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+
+  <!-- Engine and capture errors -->
+  <data name="CaptureFailed" xml:space="preserve">
+    <value>Capture failed: {0}</value>
+  </data>
+  <data name="ClipboardFailed" xml:space="preserve">
+    <value>Could not write to the clipboard.</value>
+  </data>
+  <data name="OcrEmptyImage" xml:space="preserve">
+    <value>The captured image is empty, nothing to recognize.</value>
+  </data>
+  <data name="OcrWindowsEngineUnavailable" xml:space="preserve">
+    <value>Could not create the Windows OCR engine. Install the Optical character recognition language pack for English or Chinese under Settings, Time and language, Language and region.</value>
+  </data>
+  <data name="OcrNoText" xml:space="preserve">
+    <value>OCR returned no text.</value>
+  </data>
+  <data name="OcrFailedWithReason" xml:space="preserve">
+    <value>OCR failed: {0}</value>
+  </data>
+  <data name="OcrNoTextRegions" xml:space="preserve">
+    <value>No text regions were detected.</value>
+  </data>
+  <data name="OcrOnnxFailed" xml:space="preserve">
+    <value>Local ONNX recognition failed: {0}</value>
+  </data>
+  <data name="OcrFallbackWarning" xml:space="preserve">
+    <value>Local ONNX OCR could not finish, so Windows OCR was used instead. Reason: {0}</value>
+  </data>
+  <data name="OcrBothEnginesFailed" xml:space="preserve">
+    <value>Both local engines failed. ONNX: {0}. Windows OCR: {1}.</value>
+  </data>
+  <data name="OcrUnknownError" xml:space="preserve">
+    <value>unknown error</value>
+  </data>
+  <data name="OcrWindowsFailed" xml:space="preserve">
+    <value>Windows OCR failed.</value>
+  </data>
+  <data name="OcrWindowsNoText" xml:space="preserve">
+    <value>Windows OCR returned no text.</value>
+  </data>
+</root>

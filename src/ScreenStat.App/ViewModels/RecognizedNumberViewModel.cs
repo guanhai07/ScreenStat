@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using ScreenStat.App.Resources;
 using ScreenStat.Core.Dataset;
 
 namespace ScreenStat.App.ViewModels;
@@ -59,16 +60,16 @@ public partial class RecognizedNumberViewModel : ObservableObject
 
     public string OriginText => Origin switch
     {
-        LabelOrigin.Added => "新增",
-        LabelOrigin.Excluded => "已排除",
-        LabelOrigin.Edited => "已修改",
+        LabelOrigin.Added => Strings.RowAdded,
+        LabelOrigin.Excluded => Strings.RowExcluded,
+        LabelOrigin.Edited => Strings.RowEdited,
         _ => string.Empty
     };
 
     public string ReviewText => HasParseError
-        ? "格式无效"
+        ? Strings.RowMalformed
         : IsLowConfidence
-            ? "请复核"
+            ? Strings.RowReview
             : string.Empty;
 
     internal LabelOrigin Origin

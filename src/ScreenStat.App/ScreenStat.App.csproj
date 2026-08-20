@@ -44,6 +44,22 @@
     <ProjectReference Include="..\ScreenStat.Core\ScreenStat.Core.csproj" />
   </ItemGroup>
 
+  <!--
+    Resources/Strings.Designer.cs is generated code that is committed rather
+    than produced on every build, and compiled through the normal source glob.
+
+    MSBuild can generate it (StronglyTypedFileName on the EmbeddedResource), but
+    not in a way that survives WPF: XAML is compiled through a temporary project
+    that does not run the generation, so every x:Static reference fails, and
+    adding the file to the glob as well makes csc warn CS2002 about a duplicate
+    source file. Committing it sidesteps both.
+
+    To add a string: add it to Strings.resx and Strings.zh-Hans.resx, then add
+    the matching property to Strings.Designer.cs. LocalizationTests fails if the
+    two resx files drift apart.
+  -->
+
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="RapidOcrNet" Version="3.0.0" />

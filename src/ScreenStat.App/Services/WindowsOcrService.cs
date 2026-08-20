@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Text.RegularExpressions;
+using ScreenStat.App.Resources;
 using ScreenStat.Core.Abstractions;
 using ScreenStat.Core.Models;
 using ScreenStat.Core.Parsing;
@@ -21,7 +22,7 @@ public sealed class WindowsOcrService : IOcrService
     {
         if (bgraPixels is null || bgraPixels.Length == 0 || width <= 0 || height <= 0)
         {
-            return OcrResult.Failed("截图为空，无法进行 OCR。");
+            return OcrResult.Failed(Strings.OcrEmptyImage);
         }
 
         try
@@ -29,8 +30,7 @@ public sealed class WindowsOcrService : IOcrService
             var engines = CreateEngines();
             if (engines.Count == 0)
             {
-                return OcrResult.Failed(
-                    "无法创建 Windows OCR 引擎。请在“设置 → 时间和语言 → 语言和区域”中安装英文/中文的“光学字符识别”语言包。");
+                return OcrResult.Failed(Strings.OcrWindowsEngineUnavailable);
             }
 
             var engine = engines[0]; // en-US preferred
@@ -87,7 +87,7 @@ public sealed class WindowsOcrService : IOcrService
             var merged = BuildResultFromRowsAndFull(rowTexts, fullTexts);
             if (string.IsNullOrWhiteSpace(merged))
             {
-                return OcrResult.Failed("OCR 未返回文本。");
+                return OcrResult.Failed(Strings.OcrNoText);
             }
 
             return new OcrResult
@@ -102,7 +102,7 @@ public sealed class WindowsOcrService : IOcrService
         }
         catch (Exception ex)
         {
-            return OcrResult.Failed("OCR 识别失败：" + ex.Message);
+            return OcrResult.Failed(string.Format(Strings.OcrFailedWithReason, ex.Message));
         }
     }
 

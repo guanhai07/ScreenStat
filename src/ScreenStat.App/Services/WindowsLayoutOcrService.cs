@@ -1,3 +1,4 @@
+using ScreenStat.App.Resources;
 using ScreenStat.Core.Abstractions;
 using ScreenStat.Core.Models;
 
@@ -29,14 +30,14 @@ public sealed class WindowsLayoutOcrService : ILayoutOcrService
             .ConfigureAwait(false);
         if (!result.Success)
         {
-            return OcrDocument.Failed(EngineName, result.ErrorMessage ?? "Windows OCR 识别失败。");
+            return OcrDocument.Failed(EngineName, result.ErrorMessage ?? Strings.OcrWindowsFailed);
         }
 
         var lines = (result.FullText ?? string.Empty)
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (lines.Length == 0)
         {
-            return OcrDocument.Failed(EngineName, "Windows OCR 未返回文字。");
+            return OcrDocument.Failed(EngineName, Strings.OcrWindowsNoText);
         }
 
         var rowHeight = Math.Max(1d, (double)height / lines.Length);

@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ScreenStat.App.Resources;
 using ScreenStat.Core.Dataset;
 using ScreenStat.Core.Models;
 using ScreenStat.Core.Parsing;
@@ -32,7 +33,7 @@ public partial class ResultColumnViewModel : ObservableObject
     public ResultColumnViewModel(NumericColumn column)
     {
         Index = column.Index;
-        Header = $"第 {Index} 列";
+        Header = string.Format(Strings.ColumnHeader, Index);
         Items = new ObservableCollection<RecognizedNumberViewModel>(
             column.Tokens.Select(token => new RecognizedNumberViewModel(
                 token.OriginalText,
@@ -113,7 +114,7 @@ public partial class ResultColumnViewModel : ObservableObject
             SummaryText = string.Empty;
             PrimaryStats = Array.Empty<StatItem>();
             SecondaryStats = Array.Empty<StatItem>();
-            StatusText = "本列没有启用的有效数字";
+            StatusText = Strings.ColumnNoValidNumbers;
         }
         else
         {
@@ -125,8 +126,8 @@ public partial class ResultColumnViewModel : ObservableObject
             SecondaryStats = BuildSecondaryStats(statistics, unit);
             var invalidCount = Items.Count(item => item.HasParseError);
             StatusText = invalidCount == 0
-                ? $"使用 {included.Count} 个数字"
-                : $"使用 {included.Count} 个数字，{invalidCount} 项格式无效";
+                ? string.Format(Strings.ColumnUsing, included.Count)
+                : string.Format(Strings.ColumnUsingWithInvalid, included.Count, invalidCount);
         }
 
         Changed?.Invoke(this, EventArgs.Empty);

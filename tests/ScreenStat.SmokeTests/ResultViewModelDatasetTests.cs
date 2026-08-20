@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using ScreenStat.App.Services;
 using ScreenStat.App.ViewModels;
@@ -24,6 +25,9 @@ public sealed class ResultViewModelDatasetTests : IDisposable
 
     public ResultViewModelDatasetTests()
     {
+        // Asserts Chinese status text; pin the culture so the result does not
+        // depend on the machine's language.
+        CultureInfo.CurrentUICulture = new CultureInfo(LocalizationService.SimplifiedChineseCulture);
         _captureDirectory = Path.Combine(_root, CaptureId);
         Directory.CreateDirectory(_captureDirectory);
     }
