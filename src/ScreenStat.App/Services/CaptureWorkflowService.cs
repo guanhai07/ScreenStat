@@ -13,7 +13,10 @@ internal sealed class CaptureWorkflowService
     private readonly ScreenCaptureService _captureService = new();
     private readonly ILayoutOcrService _ocrService;
     private readonly ClipboardService _clipboardService;
-    private readonly CaptureDatasetRecorder _datasetRecorder;
+
+    /// <summary>Null in slim builds, which ship without the collection tooling.</summary>
+    private readonly CaptureDatasetRecorder? _datasetRecorder;
+
     private readonly object _gate = new();
     private bool _isRunning;
     private List<SelectionWindow> _overlays = new();
@@ -21,7 +24,7 @@ internal sealed class CaptureWorkflowService
     public CaptureWorkflowService(
         ILayoutOcrService ocrService,
         ClipboardService clipboardService,
-        CaptureDatasetRecorder datasetRecorder)
+        CaptureDatasetRecorder? datasetRecorder)
     {
         _ocrService = ocrService;
         _clipboardService = clipboardService;
@@ -57,7 +60,7 @@ internal sealed class CaptureWorkflowService
 
             var viewModel = new ResultViewModel(_clipboardService);
             viewModel.ShowLoading();
-            var session = _datasetRecorder.TryBeginCapture(bitmap, width, height);
+            var session = _datasetRecorder?.TryBeginCapture(bitmap, width, height);
             if (session is not null)
             {
                 viewModel.AttachDatasetSession(session);
