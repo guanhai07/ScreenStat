@@ -3,6 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using ScreenStat.App.Infrastructure;
 using ScreenStat.App.Services;
 using ScreenStat.Core.Abstractions;
 using Drawing = System.Drawing;
@@ -23,6 +24,7 @@ public partial class App : WpfApplication
     private ClipboardService? _clipboardService;
     private AppSettingsService? _settings;
     private CaptureDatasetRecorder? _datasetRecorder;
+    private SystemThemeService? _themeService;
     private Window? _hiddenWindow;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -42,6 +44,12 @@ public partial class App : WpfApplication
 
         try
         {
+            // Match the system light/dark setting before any window is shown,
+            // otherwise the first one flashes in the wrong palette.
+            _themeService = new SystemThemeService(this);
+            _themeService.Apply();
+            WindowThemeHelper.Initialize(_themeService);
+
             // Keep a hidden window so WPF message loop / clipboard / hotkeys stay reliable.
             _hiddenWindow = new Window
             {
@@ -109,6 +117,7 @@ public partial class App : WpfApplication
         try
         {
             _hotkeyService?.Dispose();
+            _themeService?.Dispose();
             if (_layoutOcrService is IDisposable disposableOcrService)
             {
                 disposableOcrService.Dispose();
@@ -132,6 +141,24 @@ public partial class App : WpfApplication
     private void CreateTrayIcon(bool hotkeyOk)
     {
         var menu = new Forms.ContextMenuStrip();
+        if (_themeService is not null)
+        {
+            // WinForms ignores the WPF resource dictionaries, so the tray menu
+            // has to be told about the theme separately — and repainted when it
+            // changes, since the menu outlives every window.
+            menu.Renderer = new ThemedToolStripRenderer(_themeService);
+            menu.BackColor = _themeService.IsDark
+                ? Drawing.Color.FromArgb(43, 43, 43)
+                : Drawing.Color.FromArgb(249, 249, 249);
+            _themeService.ThemeChanged += (_, _) =>
+            {
+                menu.BackColor = _themeService.IsDark
+                    ? Drawing.Color.FromArgb(43, 43, 43)
+                    : Drawing.Color.FromArgb(249, 249, 249);
+                menu.Invalidate();
+            };
+        }
+
         menu.Items.Add("截图统计", null, (_, _) => Dispatcher.Invoke(() => _workflow?.Start()));
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(CreateDatasetCaptureMenuItem());

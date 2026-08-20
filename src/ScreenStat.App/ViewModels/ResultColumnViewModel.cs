@@ -20,6 +20,15 @@ public partial class ResultColumnViewModel : ObservableObject
     [ObservableProperty] private bool _hasStatistics;
     [ObservableProperty] private RecognizedNumberViewModel? _selectedItem;
 
+    /// <summary>
+    /// The headline figures, shown as a row of stat tiles. Replaced wholesale on
+    /// every recalculation so the bound ItemsControl refreshes.
+    /// </summary>
+    [ObservableProperty] private IReadOnlyList<StatItem> _primaryStats = Array.Empty<StatItem>();
+
+    /// <summary>The spread, shown compactly under the tiles.</summary>
+    [ObservableProperty] private IReadOnlyList<StatItem> _secondaryStats = Array.Empty<StatItem>();
+
     public ResultColumnViewModel(NumericColumn column)
     {
         Index = column.Index;
@@ -102,13 +111,18 @@ public partial class ResultColumnViewModel : ObservableObject
         {
             HasStatistics = false;
             SummaryText = string.Empty;
+            PrimaryStats = Array.Empty<StatItem>();
+            SecondaryStats = Array.Empty<StatItem>();
             StatusText = "本列没有启用的有效数字";
         }
         else
         {
             var statistics = StatisticsCalculator.Calculate(included);
+            var unit = InferCommonUnit(included);
             HasStatistics = true;
             SummaryText = BuildSummary(statistics, included);
+            PrimaryStats = BuildPrimaryStats(statistics, unit);
+            SecondaryStats = BuildSecondaryStats(statistics, unit);
             var invalidCount = Items.Count(item => item.HasParseError);
             StatusText = invalidCount == 0
                 ? $"使用 {included.Count} 个数字"
@@ -117,6 +131,27 @@ public partial class ResultColumnViewModel : ObservableObject
 
         Changed?.Invoke(this, EventArgs.Empty);
     }
+
+    private static IReadOnlyList<StatItem> BuildPrimaryStats(StatisticsResult statistics, string? unit) =>
+    [
+        // Count is a cardinality, so it never carries the column's unit.
+        new StatItem("Count", statistics.Count.ToString()),
+        new StatItem("Sum", WithUnit(Format(statistics.Sum), unit)),
+        new StatItem("Average", WithUnit(Format(statistics.Average), unit)),
+        new StatItem("Median", WithUnit(Format(statistics.Median), unit))
+    ];
+
+    private static IReadOnlyList<StatItem> BuildSecondaryStats(StatisticsResult statistics, string? unit) =>
+    [
+        new StatItem("Min", WithUnit(Format(statistics.Min), unit)),
+        new StatItem("Max", WithUnit(Format(statistics.Max), unit)),
+        new StatItem("P90", WithUnit(Format(statistics.P90), unit)),
+        new StatItem("P95", WithUnit(Format(statistics.P95), unit)),
+        new StatItem("P99", WithUnit(Format(statistics.P99), unit))
+    ];
+
+    private static string WithUnit(string value, string? unit) =>
+        string.IsNullOrEmpty(unit) ? value : $"{value} {unit}";
 
     internal static string BuildSummary(StatisticsResult statistics, IReadOnlyList<NumberValue> numbers)
     {

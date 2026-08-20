@@ -34,6 +34,13 @@ public partial class ResultViewModel : ObservableObject
     [ObservableProperty] private string _datasetNote = string.Empty;
     [ObservableProperty] private string _datasetStatusText = string.Empty;
 
+    /// <summary>
+    /// The column whose details are on screen. A TabControl bound to an
+    /// ObservableCollection that is filled after binding leaves nothing
+    /// selected, so the window came up blank until the user clicked a tab.
+    /// </summary>
+    [ObservableProperty] private ResultColumnViewModel? _selectedColumn;
+
     public ResultViewModel(ClipboardService clipboardService)
     {
         _clipboardService = clipboardService;
@@ -284,6 +291,7 @@ public partial class ResultViewModel : ObservableObject
 
         IsBusy = false;
         HasColumns = Columns.Count > 0;
+        SelectedColumn = Columns.FirstOrDefault();
         RefreshAggregate();
     }
 
@@ -379,6 +387,7 @@ public partial class ResultViewModel : ObservableObject
             column.Changed -= OnColumnChanged;
         }
 
+        SelectedColumn = null;
         Columns.Clear();
     }
 }

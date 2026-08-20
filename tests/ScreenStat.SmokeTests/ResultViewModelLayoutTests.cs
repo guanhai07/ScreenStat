@@ -56,6 +56,79 @@ public sealed class ResultViewModelLayoutTests
         Assert.Equal("使用 2 个数字，1 项格式无效", viewModel.Columns[1].StatusText);
     }
 
+    [Fact]
+    public void LayoutResult_SelectsTheFirstColumn()
+    {
+        // A TabControl bound to a collection filled after binding leaves nothing
+        // selected, so the window came up blank until a tab was clicked.
+        var viewModel = new ResultViewModel(new ClipboardService());
+
+        viewModel.ApplyLayoutSuccess(CreateTwoColumnDocument());
+
+        Assert.Same(viewModel.Columns[0], viewModel.SelectedColumn);
+    }
+
+    [Fact]
+    public void FailedResult_ClearsTheSelection()
+    {
+        var viewModel = new ResultViewModel(new ClipboardService());
+        viewModel.ApplyLayoutSuccess(CreateTwoColumnDocument());
+
+        viewModel.ApplyFailure("识别失败");
+
+        Assert.Null(viewModel.SelectedColumn);
+    }
+
+    [Fact]
+    public void ColumnStatistics_ArePublishedAsStatTiles()
+    {
+        var viewModel = new ResultViewModel(new ClipboardService());
+
+        viewModel.ApplyLayoutSuccess(CreateSingleColumnDocumentWithUnits());
+        var column = Assert.Single(viewModel.Columns);
+
+        Assert.Equal(
+            new[] { "Count", "Sum", "Average", "Median" },
+            column.PrimaryStats.Select(stat => stat.Label));
+        Assert.Equal(
+            new[] { "Min", "Max", "P90", "P95", "P99" },
+            column.SecondaryStats.Select(stat => stat.Label));
+
+        // The unit travels with the value, except on Count, which is a
+        // cardinality rather than a measurement.
+        Assert.Equal("3", column.PrimaryStats[0].Value);
+        Assert.Equal("60 ms", column.PrimaryStats[1].Value);
+        Assert.Equal("20 ms", column.PrimaryStats[2].Value);
+    }
+
+    [Fact]
+    public void ExcludingEveryRow_EmptiesTheStatTiles()
+    {
+        var viewModel = new ResultViewModel(new ClipboardService());
+        viewModel.ApplyLayoutSuccess(CreateSingleColumnDocumentWithUnits());
+        var column = viewModel.Columns[0];
+
+        foreach (var item in column.Items)
+        {
+            item.IsIncluded = false;
+        }
+
+        Assert.Empty(column.PrimaryStats);
+        Assert.Empty(column.SecondaryStats);
+    }
+
+    private static OcrDocument CreateSingleColumnDocumentWithUnits() => new()
+    {
+        Success = true,
+        Engine = "test",
+        Regions =
+        [
+            Region("10ms", 10, 0, 0.99, 0),
+            Region("20ms", 10, 24, 0.99, 1),
+            Region("30ms", 10, 48, 0.99, 2)
+        ]
+    };
+
     private static OcrDocument CreateTwoColumnDocument()
     {
         var regions = new List<OcrRegion>();
