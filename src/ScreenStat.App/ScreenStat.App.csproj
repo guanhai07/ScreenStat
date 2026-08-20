@@ -25,9 +25,9 @@
 
   <!--
     SlimBuild produces the framework-dependent package: a small executable that
-    requires the user to install the .NET Desktop Runtime themselves, without
-    the dataset collection tooling, which only exists to feed the regression
-    suite and has no meaning for an end user.
+    requires the user to install the .NET Desktop Runtime themselves. Dataset
+    collection is not tied to it — that is compiled out of every release build
+    via #if DEBUG.
   -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(SlimBuild)' != 'true'">
     <SelfContained>true</SelfContained>
@@ -37,7 +37,6 @@
 
   <PropertyGroup Condition="'$(SlimBuild)' == 'true'">
     <SelfContained>false</SelfContained>
-    <DefineConstants>$(DefineConstants);SCREENSTAT_SLIM</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

@@ -4,7 +4,10 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using ScreenStat.App.Infrastructure;
+using ScreenStat.App.Resources;
 using ScreenStat.App.Services;
+using ScreenStat.App.ViewModels;
+using ScreenStat.App.Views;
 using ScreenStat.Core.Abstractions;
 using Drawing = System.Drawing;
 using Forms = System.Windows.Forms;
@@ -22,10 +25,8 @@ public partial class App : WpfApplication
     private CaptureWorkflowService? _workflow;
     private ILayoutOcrService? _layoutOcrService;
     private ClipboardService? _clipboardService;
-#if !SCREENSTAT_SLIM
     private AppSettingsService? _settings;
-#endif
-    // Explicit null rather than a bare declaration: slim builds never assign
+    // Explicit null rather than a bare declaration: release builds never assign
     // this, and the compiler would warn about a never-assigned field.
     private CaptureDatasetRecorder? _datasetRecorder = null;
     private SystemThemeService? _themeService;
@@ -70,8 +71,15 @@ public partial class App : WpfApplication
             _hiddenWindow.Hide();
 
             _clipboardService = new ClipboardService();
-#if !SCREENSTAT_SLIM
+
+            // Settings drive the language, so they have to load before any
+            // window or menu is built.
             _settings = new AppSettingsService();
+            LocalizationService.Apply(_settings.Language);
+#if DEBUG
+            // Dataset collection is a development tool: it feeds the regression
+            // suite, and the samples an end user would produce are of no use to
+            // anyone. Release builds ship without it entirely.
             _datasetRecorder = new CaptureDatasetRecorder(_settings);
 #endif
             _layoutOcrService = new FallbackLayoutOcrService(
@@ -88,20 +96,23 @@ public partial class App : WpfApplication
                     catch (Exception ex)
                     {
                         Log(ex.ToString());
-                        WpfMessageBox.Show(ex.Message, "ScreenStat", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                        WpfMessageBox.Show(ex.Message, Strings.AppName, WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
                     }
                 });
             };
 
-            var hotkeyOk = _hotkeyService.RegisterDefault();
+            var hotkey = _settings.Hotkey;
+            var hotkeyOk = _hotkeyService.TryRegister(hotkey);
             CreateTrayIcon(hotkeyOk);
 
-            Log($"Startup OK. HotkeyRegistered={hotkeyOk}");
+            Log($"Startup OK. Hotkey={hotkey} Registered={hotkeyOk}");
             if (!hotkeyOk)
             {
+                // Not fatal: the tray menu still triggers a capture, and the
+                // hotkey can be changed in Settings.
                 WpfMessageBox.Show(
-                    "全局热键 Ctrl+Shift+X 注册失败，可能被占用。\n请右键托盘图标使用“截图统计”。",
-                    "ScreenStat",
+                    string.Format(Strings.StartupHotkeyFailed, hotkey),
+                    Strings.AppName,
                     WpfMessageBoxButton.OK,
                     WpfMessageBoxImage.Warning);
             }
@@ -110,8 +121,8 @@ public partial class App : WpfApplication
         {
             Log(ex.ToString());
             WpfMessageBox.Show(
-                "ScreenStat 启动失败：\n" + ex.Message + "\n\n详情已写入 %TEMP%\\ScreenStat-startup.log",
-                "ScreenStat",
+                string.Format(Strings.StartupFailed, ex.Message),
+                Strings.AppName,
                 WpfMessageBoxButton.OK,
                 WpfMessageBoxImage.Error);
             Shutdown(-1);
@@ -165,34 +176,73 @@ public partial class App : WpfApplication
             };
         }
 
-        menu.Items.Add("截图统计", null, (_, _) => Dispatcher.Invoke(() => _workflow?.Start()));
+        menu.Items.Add(Strings.TrayCapture, null, (_, _) => Dispatcher.Invoke(() => _workflow?.Start()));
         menu.Items.Add(new Forms.ToolStripSeparator());
-#if !SCREENSTAT_SLIM
+        menu.Items.Add(Strings.TraySettings, null, (_, _) => Dispatcher.Invoke(ShowSettings));
+#if DEBUG
+        menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(CreateDatasetCaptureMenuItem());
         menu.Items.Add("打开测试数据目录", null, (_, _) => OpenDatasetDirectory());
-        menu.Items.Add(new Forms.ToolStripSeparator());
 #endif
-        menu.Items.Add("关于", null, (_, _) =>
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add(Strings.TrayAbout, null, (_, _) =>
         {
             WpfMessageBox.Show(
-                "ScreenStat\n屏幕框选 → OCR → 数字统计\n本地处理，不上传数据。\n默认热键：Ctrl+Shift+X",
-                "关于 ScreenStat",
+                string.Format(Strings.AboutBody, CurrentHotkeyText),
+                Strings.TrayAbout,
                 WpfMessageBoxButton.OK,
                 WpfMessageBoxImage.Information);
         });
-        menu.Items.Add("退出", null, (_, _) => Dispatcher.Invoke(Shutdown));
+        menu.Items.Add(Strings.TrayExit, null, (_, _) => Dispatcher.Invoke(Shutdown));
 
         _trayIcon = new Forms.NotifyIcon
         {
             Visible = true,
             Icon = CreateTrayIconImage(),
-            Text = hotkeyOk ? "ScreenStat - Ctrl+Shift+X" : "ScreenStat - 用右键菜单触发",
+            Text = TrayTooltip(hotkeyOk),
             ContextMenuStrip = menu
         };
         _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(() => _workflow?.Start());
     }
 
-#if !SCREENSTAT_SLIM
+    private string CurrentHotkeyText =>
+        (_hotkeyService?.Current ?? _settings?.Hotkey ?? HotkeyDefinition.Default).ToString();
+
+    private string TrayTooltip(bool hotkeyOk) => hotkeyOk
+        ? string.Format(Strings.TrayTooltip, CurrentHotkeyText)
+        : Strings.TrayTooltipHotkeyUnavailable;
+
+    /// <summary>
+    /// Opens Settings. The tray menu is rebuilt afterwards because its items
+    /// are plain WinForms strings — a language change does not reach them, and
+    /// the tooltip has to reflect a new hotkey.
+    /// </summary>
+    private void ShowSettings()
+    {
+        if (_settings is null || _hotkeyService is null)
+        {
+            return;
+        }
+
+        var viewModel = new SettingsViewModel(
+            _settings,
+            hotkey => _hotkeyService.TryRegister(hotkey),
+            _hotkeyService.IsRegistered);
+
+        var window = new SettingsWindow(viewModel);
+        window.ShowDialog();
+
+        if (_trayIcon is not null)
+        {
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+            _trayIcon = null;
+        }
+
+        CreateTrayIcon(_hotkeyService.IsRegistered);
+    }
+
+#if DEBUG
     /// <summary>
     /// Turns everyday captures into labeled regression samples. Off by default;
     /// the choice is remembered across runs.

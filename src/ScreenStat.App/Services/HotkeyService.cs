@@ -13,28 +13,54 @@ internal sealed class HotkeyService : IDisposable
 
     public event EventHandler? HotkeyPressed;
 
-    public bool RegisterDefault()
-    {
-        // Ctrl + Shift + X
-        return Register(NativeMethods.ModControl | NativeMethods.ModShift | NativeMethods.ModNorepeat, (uint)KeyToVirtualKey(System.Windows.Input.Key.X));
-    }
+    /// <summary>The combination currently registered, or null if none is.</summary>
+    public HotkeyDefinition? Current { get; private set; }
 
-    public bool Register(uint modifiers, uint virtualKey)
+    public bool IsRegistered => _registered;
+
+    /// <summary>
+    /// Registers <paramref name="hotkey"/>, keeping the previous one if the new
+    /// combination is refused. Windows gives no reason for a refusal, but in
+    /// practice it means another program owns that combination.
+    /// </summary>
+    public bool TryRegister(HotkeyDefinition hotkey)
     {
+        if (!hotkey.IsValid)
+        {
+            return false;
+        }
+
         EnsureMessageWindow();
         if (_source?.Handle is not { } hwnd || hwnd == IntPtr.Zero)
         {
             return false;
         }
 
+        var previous = Current;
         if (_registered)
         {
             NativeMethods.UnregisterHotKey(hwnd, _hotkeyId);
             _registered = false;
+            Current = null;
         }
 
-        _registered = NativeMethods.RegisterHotKey(hwnd, _hotkeyId, modifiers, virtualKey);
-        return _registered;
+        if (NativeMethods.RegisterHotKey(hwnd, _hotkeyId, hotkey.ToWin32Modifiers(), hotkey.ToVirtualKey()))
+        {
+            _registered = true;
+            Current = hotkey;
+            return true;
+        }
+
+        // Put the old one back, so a failed change does not also lose the
+        // hotkey that was working a moment ago.
+        if (previous is not null &&
+            NativeMethods.RegisterHotKey(hwnd, _hotkeyId, previous.ToWin32Modifiers(), previous.ToVirtualKey()))
+        {
+            _registered = true;
+            Current = previous;
+        }
+
+        return false;
     }
 
     public void Dispose()
@@ -88,11 +114,6 @@ internal sealed class HotkeyService : IDisposable
         }
 
         return IntPtr.Zero;
-    }
-
-    private static uint KeyToVirtualKey(System.Windows.Input.Key key)
-    {
-        return (uint)System.Windows.Input.KeyInterop.VirtualKeyFromKey(key);
     }
 }
 

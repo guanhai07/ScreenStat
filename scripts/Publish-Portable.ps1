@@ -41,8 +41,8 @@ $publishArguments = @(
 )
 
 if ($Slim) {
-    # SlimBuild also drives the SCREENSTAT_SLIM compile constant, which strips
-    # the collection wiring — see ScreenStat.App.csproj.
+    # SlimBuild only decides self-contained versus framework-dependent. Dataset
+    # collection is compiled out of every Release build regardless.
     $publishArguments += "-p:SlimBuild=true"
     $publishArguments += "--self-contained"
     $publishArguments += "false"

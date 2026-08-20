@@ -62,6 +62,44 @@ public sealed class AppSettingsService
         }
     }
 
+    /// <summary>
+    /// The combination the user chose. Falls back to Ctrl+Shift+X when the
+    /// stored value is missing or unusable.
+    /// </summary>
+    public HotkeyDefinition Hotkey
+    {
+        get => HotkeyDefinition.Parse(_settings.Hotkey);
+        set
+        {
+            var serialized = value.Serialize();
+            if (string.Equals(_settings.Hotkey, serialized, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _settings.Hotkey = serialized;
+            Save();
+        }
+    }
+
+    public AppLanguage Language
+    {
+        get => Enum.TryParse<AppLanguage>(_settings.Language, ignoreCase: true, out var language)
+            ? language
+            : AppLanguage.System;
+        set
+        {
+            var serialized = value.ToString();
+            if (string.Equals(_settings.Language, serialized, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _settings.Language = serialized;
+            Save();
+        }
+    }
+
     private void Save()
     {
         try
@@ -102,5 +140,11 @@ public sealed class AppSettingsService
     private sealed class AppSettings
     {
         public bool DatasetCaptureEnabled { get; set; }
+
+        /// <summary>Serialized <see cref="HotkeyDefinition"/>; null means the default.</summary>
+        public string? Hotkey { get; set; }
+
+        /// <summary>Serialized <see cref="AppLanguage"/>; null means follow the system.</summary>
+        public string? Language { get; set; }
     }
 }

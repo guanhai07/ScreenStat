@@ -15,7 +15,7 @@ internal sealed class CaptureWorkflowService
     private readonly ILayoutOcrService _ocrService;
     private readonly ClipboardService _clipboardService;
 
-    /// <summary>Null in slim builds, which ship without the collection tooling.</summary>
+    /// <summary>Null in release builds, which ship without the collection tooling.</summary>
     private readonly CaptureDatasetRecorder? _datasetRecorder;
 
     private readonly object _gate = new();

@@ -20,13 +20,15 @@ ScreenStat 是一个 Windows 10/11 x64 屏幕框选数字统计工具。它常�
 | `ScreenStat-win-x64.zip` | 约 94.7 MB | 无 | 解压即用，换机器直接拷 |
 | `ScreenStat-win-x64-slim.zip` | 约 28.7 MB | 需装 .NET 10 Desktop Runtime (x64) | 下载体积敏感，或机器上已有运行时 |
 
-两个包的识别能力完全一致。精简版另外不含数据采集功能 —— 那是维护回归数据集用的，对普通使用没有意义。
+两个包的识别能力完全一致，都不含数据采集功能 —— 那是维护回归数据集用的开发工具，只存在于 Debug 构建。
 
 1. 解压，保留 `ScreenStat.exe` 和 `models` 目录的相对位置。
 2. 精简版还需先安装 [.NET 10 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/10.0) —— 下载页上选 **Desktop Runtime**，不是 Runtime 也不是 SDK。包内 `先读我.txt` 也写了这一条；没装就运行的话 Windows 会弹出提示并给出下载链接。
 3. 双击 `ScreenStat.exe`；启动后程序进入系统托盘。
 4. 按 `Ctrl+Shift+X`，拖动框选一列或多列数字。
 5. 在结果窗口复核低置信度项，然后复制统计或数字。
+
+界面语言默认跟随系统（中文系统用简体中文，其余用英文），可在托盘的**设置**里改成固定中文或英文。快捷键也在设置里改 —— 如果 `Ctrl+Shift+X` 被别的程序占用，启动时会提示，托盘菜单的「截图统计」始终可用，换个组合键即可恢复。
 
 两个包都不要求安装 Python、PaddleOCR 或 ONNX Runtime，也不要求 Windows OCR 语言包 —— 该语言包仅影响备用引擎。
 
@@ -71,6 +73,8 @@ OCR V2 的阶段状态、设计边界和中断恢复方法见 [`OCR_V2_PLAN.md`]
 ## 采集测试数据
 
 合成图覆盖不了真实报表的字体、DPI、主题和行距组合。采集模式把日常使用变成回归数据：托盘菜单勾选**采集测试数据**后，每次框选都会落盘一份样本，在结果窗口复核并保存标注，就得到一条带 ground truth 的回归用例。
+
+采集只存在于 **Debug 构建**（`#if DEBUG`）—— 它是维护数据集用的开发工具，发行包里没有。要采集就 `dotnet run --project src/ScreenStat.App`。
 
 ### 采集流程
 
@@ -137,6 +141,6 @@ tests/data/captures/
 
 两者分别生成 `publish/ScreenStat-win-x64[-slim]/`、同名 ZIP，以及 ZIP 的 SHA-256 校验值，互不覆盖。精简版包内会附一份 `先读我.txt` 说明运行时要求。
 
-`-Slim` 通过 MSBuild 属性 `SlimBuild` 同时切三件事：框架依赖发布、关掉单文件压缩（自包含专有）、定义 `SCREENSTAT_SLIM` 编译常量。采集功能是靠这个常量在编译期剔除的，不是运行时隐藏。
+`-Slim` 通过 MSBuild 属性 `SlimBuild` 切两件事：框架依赖发布、关掉单文件压缩（自包含专有）。数据采集不由它控制 —— 那是靠 `#if DEBUG` 剔除的，两个发行包都不含。
 
 第三方组件与许可证来源见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
