@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using ScreenStat.Core.Dataset;
 using ScreenStat.Core.Models;
 using ScreenStat.Core.Parsing;
 using ScreenStat.Core.Statistics;
@@ -16,6 +18,16 @@ public partial class ResultColumnViewModel : ObservableObject
     [ObservableProperty] private string _summaryText = string.Empty;
     [ObservableProperty] private string _statusText = string.Empty;
     [ObservableProperty] private bool _hasStatistics;
+    [ObservableProperty] private RecognizedNumberViewModel? _selectedItem;
+
+    /// <summary>
+    /// The headline figures, shown as a row of stat tiles. Replaced wholesale on
+    /// every recalculation so the bound ItemsControl refreshes.
+    /// </summary>
+    [ObservableProperty] private IReadOnlyList<StatItem> _primaryStats = Array.Empty<StatItem>();
+
+    /// <summary>The spread, shown compactly under the tiles.</summary>
+    [ObservableProperty] private IReadOnlyList<StatItem> _secondaryStats = Array.Empty<StatItem>();
 
     public ResultColumnViewModel(NumericColumn column)
     {
@@ -44,6 +56,30 @@ public partial class ResultColumnViewModel : ObservableObject
 
     public event EventHandler? Changed;
 
+    /// <summary>
+    /// Adds an empty row for a cell OCR missed entirely. It goes after the
+    /// selected row rather than at the end, because a dataset row only means
+    /// something if it sits in the right position in the column.
+    /// </summary>
+    [RelayCommand]
+    private void InsertRow()
+    {
+        var row = RecognizedNumberViewModel.CreateAdded();
+        var selectedIndex = SelectedItem is null ? -1 : Items.IndexOf(SelectedItem);
+        var insertAt = selectedIndex < 0 ? Items.Count : selectedIndex + 1;
+
+        row.PropertyChanged += OnItemPropertyChanged;
+        Items.Insert(insertAt, row);
+        SelectedItem = row;
+        Recalculate();
+    }
+
+    internal LabeledColumn ToLabel() => new()
+    {
+        Index = Index,
+        Rows = Items.Select(item => item.ToLabel()).ToArray()
+    };
+
     private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(RecognizedNumberViewModel.Text) or nameof(RecognizedNumberViewModel.IsIncluded))
@@ -57,8 +93,11 @@ public partial class ResultColumnViewModel : ObservableObject
         var included = new List<NumberValue>();
         foreach (var item in Items)
         {
-            var parsed = _parser.Parse(item.Text);
+            // Each row holds one cell, so the same look-alike repair the region
+            // parser applies is valid for manual edits too.
+            var parsed = _parser.Parse(item.Text, isolatedToken: true);
             item.HasParseError = parsed.Count != 1;
+            item.ParsedValue = parsed.Count == 1 ? parsed[0].Value : null;
             if (item.IsIncluded && parsed.Count == 1)
             {
                 included.Add(parsed[0]);
@@ -72,13 +111,18 @@ public partial class ResultColumnViewModel : ObservableObject
         {
             HasStatistics = false;
             SummaryText = string.Empty;
+            PrimaryStats = Array.Empty<StatItem>();
+            SecondaryStats = Array.Empty<StatItem>();
             StatusText = "本列没有启用的有效数字";
         }
         else
         {
             var statistics = StatisticsCalculator.Calculate(included);
+            var unit = InferCommonUnit(included);
             HasStatistics = true;
             SummaryText = BuildSummary(statistics, included);
+            PrimaryStats = BuildPrimaryStats(statistics, unit);
+            SecondaryStats = BuildSecondaryStats(statistics, unit);
             var invalidCount = Items.Count(item => item.HasParseError);
             StatusText = invalidCount == 0
                 ? $"使用 {included.Count} 个数字"
@@ -87,6 +131,27 @@ public partial class ResultColumnViewModel : ObservableObject
 
         Changed?.Invoke(this, EventArgs.Empty);
     }
+
+    private static IReadOnlyList<StatItem> BuildPrimaryStats(StatisticsResult statistics, string? unit) =>
+    [
+        // Count is a cardinality, so it never carries the column's unit.
+        new StatItem("Count", statistics.Count.ToString()),
+        new StatItem("Sum", WithUnit(Format(statistics.Sum), unit)),
+        new StatItem("Average", WithUnit(Format(statistics.Average), unit)),
+        new StatItem("Median", WithUnit(Format(statistics.Median), unit))
+    ];
+
+    private static IReadOnlyList<StatItem> BuildSecondaryStats(StatisticsResult statistics, string? unit) =>
+    [
+        new StatItem("Min", WithUnit(Format(statistics.Min), unit)),
+        new StatItem("Max", WithUnit(Format(statistics.Max), unit)),
+        new StatItem("P90", WithUnit(Format(statistics.P90), unit)),
+        new StatItem("P95", WithUnit(Format(statistics.P95), unit)),
+        new StatItem("P99", WithUnit(Format(statistics.P99), unit))
+    ];
+
+    private static string WithUnit(string value, string? unit) =>
+        string.IsNullOrEmpty(unit) ? value : $"{value} {unit}";
 
     internal static string BuildSummary(StatisticsResult statistics, IReadOnlyList<NumberValue> numbers)
     {

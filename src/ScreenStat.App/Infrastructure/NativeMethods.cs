@@ -117,5 +117,19 @@ public static class NativeMethods
     public static extern short GetAsyncKeyState(int vKey);
 
     public const int VkEscape = 0x1B;
+
+    /// <summary>
+    /// Repaints the non-client area — title bar, border — in dark colours. Without
+    /// it a dark window keeps a white title bar, which is the giveaway that an app
+    /// only themed its own content.
+    /// </summary>
+    public const int DwmwaUseImmersiveDarkMode = 20;
+
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmSetWindowAttribute(
+        IntPtr hwnd,
+        int attribute,
+        ref int value,
+        int valueSize);
 }
 

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using ScreenStat.App.Infrastructure;
 using ScreenStat.App.ViewModels;
@@ -12,14 +13,19 @@ internal sealed class CaptureWorkflowService
     private readonly ScreenCaptureService _captureService = new();
     private readonly ILayoutOcrService _ocrService;
     private readonly ClipboardService _clipboardService;
+    private readonly CaptureDatasetRecorder _datasetRecorder;
     private readonly object _gate = new();
     private bool _isRunning;
     private List<SelectionWindow> _overlays = new();
 
-    public CaptureWorkflowService(ILayoutOcrService ocrService, ClipboardService clipboardService)
+    public CaptureWorkflowService(
+        ILayoutOcrService ocrService,
+        ClipboardService clipboardService,
+        CaptureDatasetRecorder datasetRecorder)
     {
         _ocrService = ocrService;
         _clipboardService = clipboardService;
+        _datasetRecorder = datasetRecorder;
     }
 
     public async void Start()
@@ -51,17 +57,25 @@ internal sealed class CaptureWorkflowService
 
             var viewModel = new ResultViewModel(_clipboardService);
             viewModel.ShowLoading();
+            var session = _datasetRecorder.TryBeginCapture(bitmap, width, height);
+            if (session is not null)
+            {
+                viewModel.AttachDatasetSession(session);
+            }
+
             var window = new ResultWindow(viewModel);
             window.Show();
 
+            var stopwatch = Stopwatch.StartNew();
             var ocr = await _ocrService.RecognizeLayoutAsync(pixels, width, height).ConfigureAwait(true);
+            stopwatch.Stop();
             if (!ocr.Success)
             {
-                viewModel.ApplyFailure(ocr.ErrorMessage ?? "OCR 失败");
+                viewModel.ApplyLayoutFailure(ocr, stopwatch.Elapsed);
                 return;
             }
 
-            viewModel.ApplyLayoutSuccess(ocr);
+            viewModel.ApplyLayoutSuccess(ocr, stopwatch.Elapsed);
         }
         catch (Exception ex)
         {

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "captureId": "seed-dark-theme",
+  "labeledAt": "2026-08-12T16:11:23+08:00",
+  "note": "深色主题 / 单列 5 行 / 手工录制的真实截图",
+  "columns": [
+    {
+      "index": 1,
+      "rows": [
+        {
+          "recognized": "123",
+          "corrected": "123",
+          "value": 123,
+          "included": true,
+          "origin": "ocr"
+        },
+        {
+          "recognized": "156",
+          "corrected": "156",
+          "value": 156,
+          "included": true,
+          "origin": "ocr"
+        },
+        {
+          "recognized": "98",
+          "corrected": "98",
+          "value": 98,
+          "included": true,
+          "origin": "ocr"
+        },
+        {
+          "recognized": "231",
+          "corrected": "231",
+          "value": 231,
+          "included": true,
+          "origin": "ocr"
+        },
+        {
+          "recognized": "145",
+          "corrected": "145",
+          "value": 145,
+          "included": true,
+          "origin": "ocr"
+        }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,69 @@ namespace ScreenStat.Core.Parsing;
 /// </summary>
 public static class OcrTextNormalizer
 {
+    // Only the round/vertical-stroke look-alikes are repaired without digit
+    // context: a narrow "0" comes back as O, o, Q or D and a "1" as l or I.
+    // S, B and Z stay context-bound because a standalone one is plausibly a
+    // real label (size or grade column) rather than a damaged 5, 8 or 2.
+    private static readonly Regex IsolatedDigitLookAlikeRegex = new(
+        @"^[0-9OoQDlI|,.\-+%]+$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    // A comma trailed by one or two digits cannot be a thousands separator,
+    // which always groups exactly three. In an isolated numeric cell it is a
+    // decimal point the recognizer read as a comma — common in percentage
+    // columns, where "7.17%" comes back as "7,17%".
+    private static readonly Regex DecimalCommaRegex = new(
+        @",(?=\d{1,2}(?!\d))",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Repairs digit look-alikes in text that is known to be one isolated cell
+    /// — a single OCR region or a single manually edited row — rather than
+    /// prose. The recognizer has no context inside a one-glyph box, so a lone
+    /// "0" commonly comes back as "O" and a lone "1" as "l" or "I"; the
+    /// adjacency rules in <see cref="Normalize"/> cannot repair those because
+    /// they require a neighbouring digit. A decimal point read as a comma is
+    /// repaired here too. Returns the input unchanged whenever the token could
+    /// still be real text.
+    /// </summary>
+    public static string RepairIsolatedNumericToken(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return text;
+        }
+
+        var trimmed = text.Trim();
+        if (!IsolatedDigitLookAlikeRegex.IsMatch(trimmed))
+        {
+            return text;
+        }
+
+        // With no digit to anchor on, allow at most two look-alike letters so
+        // "O" and "O.O" are repaired while "Ill" or "OOO" are left alone.
+        if (!trimmed.Any(char.IsDigit) && trimmed.Count(char.IsLetter) > 2)
+        {
+            return text;
+        }
+
+        var builder = new StringBuilder(text.Length);
+        foreach (var ch in text)
+        {
+            builder.Append(ch switch
+            {
+                'O' or 'o' or 'Q' or 'D' => '0',
+                'l' or 'I' or '|' => '1',
+                _ => ch
+            });
+        }
+
+        // After the look-alike pass, so "7,l7%" is repaired to "7.17%" too.
+        // Left until last because a real thousands separator must survive:
+        // "1,234" keeps its comma and Normalize collapses it to 1234.
+        return DecimalCommaRegex.Replace(builder.ToString(), ".");
+    }
+
     public static string Normalize(string text)
     {
         if (string.IsNullOrWhiteSpace(text))

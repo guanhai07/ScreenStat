@@ -100,6 +100,7 @@ public partial class SelectionWindow : Window
         if (region.IsEmpty)
         {
             SelectionRectangle.Visibility = Visibility.Collapsed;
+            SizeBadge.Visibility = Visibility.Collapsed;
             UpdateDimPath(null);
             return;
         }
@@ -115,7 +116,32 @@ public partial class SelectionWindow : Window
         SelectionRectangle.Height = Math.Max(h, 0);
         SelectionRectangle.Visibility = Visibility.Visible;
 
+        UpdateSizeBadge(region, x, y);
         UpdateDimPath(new Rect(x, y, w, h));
+    }
+
+    /// <summary>
+    /// Reports the selection in physical pixels — the units the capture and the
+    /// recognizer actually work in, not the DPI-scaled ones on screen.
+    /// </summary>
+    private void UpdateSizeBadge(ScreenRegion region, double x, double y)
+    {
+        SizeText.Text = $"{region.Width} × {region.Height}";
+        SizeBadge.Visibility = Visibility.Visible;
+
+        // Measure before placing, or the first frame lands with a stale height.
+        SizeBadge.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+        var badgeHeight = SizeBadge.DesiredSize.Height;
+
+        // Sits above the selection, and flips inside it near the top edge.
+        var top = y - badgeHeight - 6;
+        if (top < 0)
+        {
+            top = y + 6;
+        }
+
+        Canvas.SetLeft(SizeBadge, Math.Max(x, 0));
+        Canvas.SetTop(SizeBadge, top);
     }
 
     private void UpdateDimPath(Rect? clearRect)

@@ -1,4 +1,4 @@
-﻿# Ignore build outputs and user files
+# Ignore build outputs and user files
 **/bin/
 **/obj/
 .vs/
@@ -8,3 +8,8 @@
 *.log
 TestResults/
 publish/
+
+# Captures collected by the in-app dataset mode. Real reports contain business
+# data, so screenshots stay local; the committed seed sample lives under
+# tests/ScreenStat.DatasetTests/SeedCapture/ instead.
+tests/data/captures/
