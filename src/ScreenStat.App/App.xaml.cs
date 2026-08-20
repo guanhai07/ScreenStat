@@ -22,8 +22,12 @@ public partial class App : WpfApplication
     private CaptureWorkflowService? _workflow;
     private ILayoutOcrService? _layoutOcrService;
     private ClipboardService? _clipboardService;
+#if !SCREENSTAT_SLIM
     private AppSettingsService? _settings;
-    private CaptureDatasetRecorder? _datasetRecorder;
+#endif
+    // Explicit null rather than a bare declaration: slim builds never assign
+    // this, and the compiler would warn about a never-assigned field.
+    private CaptureDatasetRecorder? _datasetRecorder = null;
     private SystemThemeService? _themeService;
     private Window? _hiddenWindow;
 
@@ -66,8 +70,10 @@ public partial class App : WpfApplication
             _hiddenWindow.Hide();
 
             _clipboardService = new ClipboardService();
+#if !SCREENSTAT_SLIM
             _settings = new AppSettingsService();
             _datasetRecorder = new CaptureDatasetRecorder(_settings);
+#endif
             _layoutOcrService = new FallbackLayoutOcrService(
                 new RapidLayoutOcrService(),
                 new WindowsLayoutOcrService());
@@ -161,9 +167,11 @@ public partial class App : WpfApplication
 
         menu.Items.Add("截图统计", null, (_, _) => Dispatcher.Invoke(() => _workflow?.Start()));
         menu.Items.Add(new Forms.ToolStripSeparator());
+#if !SCREENSTAT_SLIM
         menu.Items.Add(CreateDatasetCaptureMenuItem());
         menu.Items.Add("打开测试数据目录", null, (_, _) => OpenDatasetDirectory());
         menu.Items.Add(new Forms.ToolStripSeparator());
+#endif
         menu.Items.Add("关于", null, (_, _) =>
         {
             WpfMessageBox.Show(
@@ -184,6 +192,7 @@ public partial class App : WpfApplication
         _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(() => _workflow?.Start());
     }
 
+#if !SCREENSTAT_SLIM
     /// <summary>
     /// Turns everyday captures into labeled regression samples. Off by default;
     /// the choice is remembered across runs.
@@ -231,6 +240,7 @@ public partial class App : WpfApplication
                 WpfMessageBoxImage.Warning);
         }
     }
+#endif
 
     private static Icon CreateTrayIconImage()
     {

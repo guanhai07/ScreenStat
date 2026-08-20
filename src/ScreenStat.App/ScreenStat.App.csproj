@@ -17,12 +17,27 @@
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <!--
+    SlimBuild produces the framework-dependent package: a small executable that
+    requires the user to install the .NET Desktop Runtime themselves, without
+    the dataset collection tooling, which only exists to feed the regression
+    suite and has no meaning for an end user.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(SlimBuild)' != 'true'">
+    <SelfContained>true</SelfContained>
+    <!-- Compression in a single file is a self-contained-only feature. -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(SlimBuild)' == 'true'">
+    <SelfContained>false</SelfContained>
+    <DefineConstants>$(DefineConstants);SCREENSTAT_SLIM</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

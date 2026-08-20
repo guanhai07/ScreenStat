@@ -13,23 +13,41 @@ ScreenStat 是一个 Windows 10/11 x64 屏幕框选数字统计工具。它常�
 
 ## 使用发行版
 
-1. 解压 `ScreenStat-win-x64.zip`，保留 `ScreenStat.exe` 和 `models` 目录的相对位置。
-2. 双击 `ScreenStat.exe`；启动后程序进入系统托盘。
-3. 按 `Ctrl+Shift+X`，拖动框选一列或多列数字。
-4. 在结果窗口复核低置信度项，然后复制统计或数字。
+有两个包，按是否愿意装运行时选：
 
-自包含发行版不要求安装 .NET、Python、PaddleOCR、ONNX Runtime，也不要求 Windows OCR 语言包。Windows OCR 语言包仅影响备用引擎。
+| 包 | 下载体积 | 前置条件 | 适合 |
+|---|---|---|---|
+| `ScreenStat-win-x64.zip` | 约 94.7 MB | 无 | 解压即用，换机器直接拷 |
+| `ScreenStat-win-x64-slim.zip` | 约 28.7 MB | 需装 .NET 10 Desktop Runtime (x64) | 下载体积敏感，或机器上已有运行时 |
+
+两个包的识别能力完全一致。精简版另外不含数据采集功能 —— 那是维护回归数据集用的，对普通使用没有意义。
+
+1. 解压，保留 `ScreenStat.exe` 和 `models` 目录的相对位置。
+2. 精简版还需先安装 [.NET 10 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/10.0) —— 下载页上选 **Desktop Runtime**，不是 Runtime 也不是 SDK。包内 `先读我.txt` 也写了这一条；没装就运行的话 Windows 会弹出提示并给出下载链接。
+3. 双击 `ScreenStat.exe`；启动后程序进入系统托盘。
+4. 按 `Ctrl+Shift+X`，拖动框选一列或多列数字。
+5. 在结果窗口复核低置信度项，然后复制统计或数字。
+
+两个包都不要求安装 Python、PaddleOCR 或 ONNX Runtime，也不要求 Windows OCR 语言包 —— 该语言包仅影响备用引擎。
 
 ## 发行体积
 
-2026-08-20 在 `win-x64` 自包含发布上的实测值：
+2026-08-20 在 `win-x64` 上的实测值。
+
+自包含版：
 
 - `ScreenStat.exe`：约 88.3 MB，包含 .NET 10 Desktop Runtime、程序及本地推理运行库。
 - `models/v5`：约 13.1 MB，包含 PP-OCRv5 Latin mobile 模型。
-- 解压目录：约 101.4 MB。
-- ZIP：约 94.7 MB。
+- 解压目录：约 101.4 MB，ZIP 约 94.7 MB。
 
-体积主要来自自包含的 .NET/WPF 运行时和 ONNX Runtime。若改为依赖系统运行时可以更小，但会要求用户预装 .NET 10 Desktop Runtime，不符合“解压即用”的默认目标。Fluent 主题资源、数据集采集和新增窗口对体积没有可测量的影响。
+精简版（框架依赖）：
+
+- `ScreenStat.exe`：约 54.1 MB。
+- 解压目录：约 64.7 MB，ZIP 约 28.7 MB。
+
+注意两版的 EXE 大小不可直接相比：`EnableCompressionInSingleFile` 只支持自包含发布，所以自包含版那 88.3 MB 是**压缩过的**单文件包，精简版的 54.1 MB 没有压缩。ZIP 体积才是可比的口径 —— 下载量少了 3.3 倍。
+
+精简版省掉的是 .NET/WPF 运行时；剩下的体积主要是 ONNX Runtime、SkiaSharp 的原生库和 Windows SDK 投影程序集，这些两版都要带。模型不能省：项目不在首次运行时下载模型。Fluent 主题资源、数据集采集和新增窗口对体积没有可测量的影响。
 
 启动与识别耗时为 2026-08-17 的开发机基准，此后未重新测量：自包含 EXE 冷启动约 1.0–1.5 秒；16 行测试图首次 OCR 约 1.8 秒、后续约 1.3–1.4 秒。实际速度会随 CPU、选区尺寸和字体而变化。
 
@@ -101,14 +119,20 @@ tests/data/captures/
 
 ## 发布
 
+自包含版：
+
 ```powershell
 .\scripts\Publish-Portable.ps1
 ```
 
-脚本会生成：
+精简版（框架依赖，且剥离数据采集）：
 
-- `publish/ScreenStat-win-x64/`
-- `publish/ScreenStat-win-x64.zip`
-- ZIP 的 SHA-256 校验值
+```powershell
+.\scripts\Publish-Portable.ps1 -Slim
+```
+
+两者分别生成 `publish/ScreenStat-win-x64[-slim]/`、同名 ZIP，以及 ZIP 的 SHA-256 校验值，互不覆盖。精简版包内会附一份 `先读我.txt` 说明运行时要求。
+
+`-Slim` 通过 MSBuild 属性 `SlimBuild` 同时切三件事：框架依赖发布、关掉单文件压缩（自包含专有）、定义 `SCREENSTAT_SLIM` 编译常量。采集功能是靠这个常量在编译期剔除的，不是运行时隐藏。
 
 第三方组件与许可证来源见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
